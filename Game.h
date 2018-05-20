@@ -277,7 +277,7 @@ private:
         unique_ptr<Move> move = player->getMove();
         verifyMove(player_number, *move);
         
-        unique_ptr<JokerChange> joker_change = player1->getJokerChange();
+        unique_ptr<JokerChange> joker_change = player->getJokerChange();
         
         /* OK - time to apply the logic to the board. */
         
@@ -298,6 +298,7 @@ private:
         
         for(size_t move_count = 0; move_count < 50; ++move_count) {
             /* Do we have a winner yet? */
+            //TODO: add appropriate messages for winning
             if (0 == player1_flags || 0 == player2_flags) {
                 if (0 == player1_flags && 0 == player2_flags) return 0;
                 if (0 == player1_flags) return 2;
@@ -311,6 +312,7 @@ private:
             }
             
             if (0 == player1_flags || 0 == player2_flags) {
+                //TODO: add appropriate messages for winning
                 if (0 == player1_flags && 0 == player2_flags) return 0;
                 if (0 == player1_flags) return 2;
                 return 1;
