@@ -46,12 +46,33 @@ public:
                                                                                          other.getJokerRep()) {}
 
     ConcretePiecePosition() : player(0), point(nullptr), type('#'), joker_type('#') {}
+
+    const ConcretePiecePosition& operator=(ConcretePiecePosition &&other)
+    {
+        if (this == &other) {
+            return *this;
+        }
+        
+        type = other.getPiece();
+        joker_type = other.getJokerRep();
+        player = other.getPlayer();
+        point = std::make_unique<ConcretePoint>(other.getPosition().getX(), other.getPosition().getY());
+        
+        /* Invalid the other instance now. */
+        other.reset();
+        
+        return *this;
+    }
     
-    ConcretePiecePosition(const ConcretePiecePosition &&other): player(other.getPlayer()),
-                                                                point(std::make_unique<ConcretePoint>(other.getPosition().getX(),
-                                                                                                      other.getPosition().getY())),
-                                                                type(other.getPiece()),
-                                                                joker_type(other.getJokerRep()) {}
+    void reset(bool destroy_point = true)
+    {
+        type = '#';
+        joker_type = '#';
+        player = 0;
+        if (destroy_point) {
+            point = nullptr;
+        }
+    }
     
     virtual const Point& getPosition() const override { return *point; }
     virtual char getPiece() const override { return type; }

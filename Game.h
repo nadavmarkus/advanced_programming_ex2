@@ -228,15 +228,17 @@ private:
         verifyCoordinatesInRange(from);
         verifyCoordinatesInRange(to);
         
-        int owning_player = board->getPlayer(from);
+        int from_owning_player = board->getPlayer(from);
         
         /* Make sure the player attempted to move its own piece.. */
-        if (owning_player != player_number) {
+        if (from_owning_player != player_number) {
             throw BadMoveError(std::string("Invalid move"));
         }
         
+        int target_owning_player = board->getPlayer(to);
+        
         /* You can't move pieces into spaces owned by yourself.. */
-        if (owning_player == player_number) {
+        if (target_owning_player == player_number) {
             throw BadMoveError(std::string("Invalid move"));
         }
         
@@ -280,6 +282,37 @@ private:
         unique_ptr<JokerChange> joker_change = player->getJokerChange();
         
         /* OK - time to apply the logic to the board. */
+        int other_player = board->getPlayer(move->getTo());
+        
+        const Point &from = move->getFrom();
+        const Point &to = move->getTo();
+        
+        /* This surely means that the other player is the opponent! */
+        if (0 != other_player) {
+            assert(other_player == 1 + (player_number % 2));
+            int winner = calculateWinner(board->getPiece(from), board->getPiece(to));
+            
+            /* Attacker won - update accordingly. */
+            if (winner == player_number) {
+                board->movePiece(from, to);
+            
+            /* Defender won - update accordingly. */
+            } else if (winner == other_player) {
+                board->invalidatePosition(from);
+                
+            /* Tie - both positions are invalidated. */
+            } else if (0 == winner) {
+                board->invalidatePosition(to);
+                board->invalidatePosition(from);
+                
+            } else {
+                /* Should not happen. */
+                assert(false);
+            }
+            
+        } else {
+            board->movePiece(from, to);
+        }
         
         /* And now to apply the potential joker change. */
         if (nullptr != joker_change) {

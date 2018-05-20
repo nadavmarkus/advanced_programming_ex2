@@ -5,6 +5,7 @@
 #include "Globals.h"
 #include "ConcretePiecePosition.h"
 #include <stdlib.h>
+#include <utility>
 
 
 class ConcreteBoard : public Board
@@ -32,9 +33,19 @@ public:
         board[position.getPosition().getY() - 1][position.getPosition().getX() - 1] = position;
     }
     
-    const ConcretePiecePosition& getPiece(const Point& point) const
+    const ConcretePiecePosition& getPiece(const Point &point) const
     {
         return board[point.getY() - 1][point.getX() - 1];
+    }
+    
+    void movePiece(const Point &from, const Point &to)
+    {
+        board[to.getY() - 1][to.getX() - 1] = std::move(board[from.getY() - 1][from.getX() - 1]);
+    }
+    
+    void invalidatePosition(const Point &where)
+    {
+        board[where.getY() - 1][where.getX() - 1].reset(false);
     }
 };
 
