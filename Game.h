@@ -10,8 +10,8 @@
 #include "BaseError.h"
 #include "PositionError.h"
 #include "Board.h"
-#include "ConcreteBoard.h"
 #include "FightInfo.h"
+#include "ConcreteFightInfo.h"
 
 #include <vector>
 #include <memory>
@@ -141,7 +141,7 @@ private:
     {
          std::map<std::pair<unsigned int, unsigned int>, ConcretePiecePosition> point_to_piece_position;
          std::pair<unsigned int, unsigned int> cur_coord;
-         std::vector<unique_ptr<
+         std::vector<unique_ptr<FightInfo>> fights;
          
          /* After iterating only on one player's positions, no possible conflict is possible. */
          for (auto const &position: player1_positions) {
@@ -156,6 +156,9 @@ private:
             if (point_to_piece_position.count(cur_coord)) {
                 ConcretePiecePosition pos(2, *position);
                 int conflict_result = calculateWinner(point_to_piece_position[cur_coord], pos);
+                
+                char player1_type = point_to_piece_position[cur_coord].getPiece();
+                char player2_type = pos.getPiece();
                 
                 switch(conflict_result) {
                     case 2:
@@ -172,10 +175,24 @@ private:
                         break;
                 }
                 
+                fights.push_back(std::make_unique<ConcreteFightInfo>(conflict_result,
+                                                                     player1_type,
+                                                                     player2_type,
+                                                                     position->getPosition().getX(),
+                                                                     position->getPosition().getY()));
+                
             } else {
                 point_to_piece_position[cur_coord] = ConcretePiecePosition(2, *position);
             }
-         }
+        }
+        
+        /* All right, we are finished. we can populate the board, and call the notify routines. */
+        for (auto const &point_to_piece: point_to_piece_position) {
+            board->addPosition(point_to_piece.second);
+        }
+        
+        player1->notifyOnInitialBoard(*board, fights);
+        player2->notifyOnInitialBoard(*board, fights);
     }
     
     /*

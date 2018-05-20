@@ -24,13 +24,12 @@ public:
 
     virtual int getPlayer(const Point& pos) const override
     {
-        return board[pos.getY()][pos.getX()].getPlayer();
+        return board[pos.getY() - 1][pos.getX() - 1].getPlayer();
     }
     
-    void addPosition(int player, PiecePosition &position)
+    void addPosition(const ConcretePiecePosition &position)
     {
-        ConcretePiecePosition newPosition(player, position);
-        board[position.getPosition().getY()][position.getPosition().getX()] = newPosition;
+        board[position.getPosition().getY() - 1][position.getPosition().getX() - 1] = position;
     }
 };
 

@@ -44,7 +44,7 @@ public:
                                                                                          other.getPosition().getY(),
                                                                                          other.getPiece(),
                                                                                          other.getJokerRep()) {}
-    
+
     ConcretePiecePosition() : player(0), point(nullptr), type('#'), joker_type('#') {}
     
     ConcretePiecePosition(const ConcretePiecePosition &&other): player(other.getPlayer()),
