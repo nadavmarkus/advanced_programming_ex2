@@ -7,7 +7,7 @@
 
 #include <memory>
 
-class ConcreteMove : Move
+class ConcreteMove : public Move
 {
 private:
     ConcretePoint from;

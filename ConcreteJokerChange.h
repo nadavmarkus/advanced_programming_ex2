@@ -11,9 +11,9 @@ private:
     ConcretePoint position;
     char new_type;
 public:
-    JokerChange(int x, int y, char new_type): position(x, y), new_type(new_type) {}
+    ConcreteJokerChange(int x, int y, char new_type): position(x, y), new_type(new_type) {}
     virtual const Point& getJokerChangePosition() const override { return position; }
     virtual char getJokerNewRep() const override { return new_type; }
-}
+};
 
 #endif

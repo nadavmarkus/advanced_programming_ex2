@@ -10,6 +10,7 @@
 #include "Move.h"
 #include "ConcreteMove.h"
 #include "JokerChange.h"
+#include "ConcreteJokerChange.h"
 
 #include <stdlib.h>
 #include <vector>
@@ -53,13 +54,31 @@ private:
     bool joker_parsing_failed;
     std::ifstream player_move_file;
     
-    void parseJokerParameters()
+    void parseJokerParameters(std::stringstream &formatted_line)
     {
+        char expected_colon, expected_j;
+        formatted_line >> expected_j >> expected_colon;
         
+        /* No joker in this line. */
+        if (formatted_line.fail()) {
+            return;
+        }
+        
+        if ('J' != expected_j || ':' != expected_colon) {
+            joker_parsing_failed = true;
+            return;
+        }
+        
+        formatted_line >> joker_x >> joker_y >> new_joker_type;
+        
+        if (formatted_line.fail()) {
+            joker_parsing_failed = true;
+            return;
+        }
     }
 
     void parseBoardFile(std::ifstream &player_file,
-                 std::vector<unique_ptr<PiecePosition>> &vectorToFill) const
+                        std::vector<unique_ptr<PiecePosition>> &vectorToFill) const
     {
         //TODO: Factor to smaller methods.
         std::string line;
@@ -162,7 +181,7 @@ private:
     }
 
 public:
-    PlayerAlgorithm() : player(0), player_move_file() {}
+    FilePlayerAlgorithm() : player(0), player_move_file() {}
 
     virtual void getInitialPositions(int player, std::vector<unique_ptr<PiecePosition>>& vectorToFill) override
     {
@@ -228,6 +247,11 @@ public:
         if (formatted_line.fail()) {
             //TODO: handle error
         }
+        
+        parseJokerParameters(formatted_line);
+        std::unique_ptr<Move> result = std::make_unique<ConcreteMove>(source_x, source_y, dest_x, dest_y);
+        return result;
+
     }
     
     virtual unique_ptr<JokerChange> getJokerChange() override
@@ -236,10 +260,11 @@ public:
             //TODO: Handle error.
         }
         
-        //TODO: Implement me.
-        if (0 == joker_x || 0 == joker_y || '#' == new_joker_type) {
+        if (0 == joker_x && 0 == joker_y && '#' == new_joker_type) {
             return nullptr;
         }
+        
+        return std::make_unique<ConcreteJokerChange>(joker_x, joker_y, new_joker_type);
     }
 };
 
