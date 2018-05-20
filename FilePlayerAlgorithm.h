@@ -104,7 +104,7 @@ private:
                 }
             }
             
-            vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(x, y, type, masquerade_type));
+            vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(player, x, y, type, masquerade_type));
         }
         
     }

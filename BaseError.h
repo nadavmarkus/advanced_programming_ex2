@@ -6,9 +6,10 @@
 class BaseError
 {
 private:
-    std::string message;
+    const std::string message;
 public:
     BaseError(const std::string &message): message(message) {}
+    virtual const std::string& getMessage() const { return message; }
 };
 
 #endif
