@@ -79,6 +79,7 @@ public:
     virtual char getJokerRep() const override { return joker_type; }
     int getPlayer() const { return player; }
     void setPoint(int x, int y) { point = std::make_unique<ConcretePoint>(x, y); }
+    void setJokerRep(char joker_type) { this->joker_type = joker_type; }
 };
 
 

@@ -47,6 +47,11 @@ public:
     {
         board[where.getY() - 1][where.getX() - 1].reset(false);
     }
+    
+    void updateJokerPiece(const Point &where, char new_joker_type)
+    {
+        board[where.getY() - 1][where.getX() - 1].setJokerRep(new_joker_type);
+    }
 };
 
 #endif

@@ -107,8 +107,8 @@ private:
     }
     
     /* Note: This function also updates the amount of flags for each player. */
-    int calculateWinner(ConcretePiecePosition &player1_piece,
-                        ConcretePiecePosition &player2_piece)
+    int calculateWinner(const ConcretePiecePosition &player1_piece,
+                        const ConcretePiecePosition &player2_piece)
     {
         char piece1_type = player1_piece.getPiece();
         char piece2_type = player2_piece.getPiece();
@@ -317,7 +317,7 @@ private:
         /* And now to apply the potential joker change. */
         if (nullptr != joker_change) {
             verifyJokerChange(player_number, *joker_change);
-            //TODO: Invoke actual change.
+            board->updateJokerPiece(joker_change->getJokerChangePosition(), joker_change->getJokerNewRep());
         }        
     }
     
