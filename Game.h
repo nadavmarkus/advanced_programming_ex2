@@ -12,17 +12,20 @@
 #include "Board.h"
 #include "FightInfo.h"
 #include "ConcreteFightInfo.h"
+#include "JokerChange.h"
+#include "Move.h"
+#include "BadMoveError.h"
 
 #include <vector>
 #include <memory>
 #include <set>
 #include <map>
 #include <assert.h>
+#include <stdlib.h>
 
 class Game
 {
 private:
-    bool player1_lost, player2_lost;
     std::string player1_loss_reason;
     std::string player2_loss_reason;
     std::vector<std::unique_ptr<PiecePosition>> player1_positions;
@@ -30,6 +33,8 @@ private:
     PlayerAlgorithm *player1;
     PlayerAlgorithm *player2;
     std::unique_ptr<ConcreteBoard> board;
+    size_t player1_flags;
+    size_t player2_flags;
     
     void verifyJokerPositioning(int player, const PiecePosition &position) const
     {
@@ -101,8 +106,9 @@ private:
         }
     }
     
+    /* Note: This function also updates the amount of flags for each player. */
     int calculateWinner(ConcretePiecePosition &player1_piece,
-                        ConcretePiecePosition &player2_piece) const
+                        ConcretePiecePosition &player2_piece)
     {
         char piece1_type = player1_piece.getPiece();
         char piece2_type = player2_piece.getPiece();
@@ -112,20 +118,26 @@ private:
         
         /* Both pieces are destroyed in this case. */
         if ('B' == piece1_type || 'B' == piece2_type || piece1_type == piece2_type) {
+            if ('F' == piece1_type) player1_flags--;
+            if ('F' == piece2_type) player2_flags--;
             return 0;
         }
         
+        /* Player 2 won */
         if (('F' == piece1_type) ||
             ('S' == piece1_type && 'R' == piece2_type) ||
             ('P' == piece1_type && 'S' == piece2_type) ||
             ('R' == piece1_type && 'P' == piece2_type)) {
+            if ('F' == piece1_type) player1_flags--;
             return 2;
         }
         
+        /* Player 1 won */
         if (('F' == piece2_type) ||
             ('S' == piece2_type && 'R' == piece1_type) ||
             ('P' == piece2_type && 'S' == piece1_type) ||
             ('R' == piece2_type && 'P' == piece1_type)) {
+            if ('F' == piece2_type) player2_flags--;
             return 1;
         }
         
@@ -195,23 +207,92 @@ private:
         player2->notifyOnInitialBoard(*board, fights);
     }
     
+    void verifyCoordinatesInRange(const Point &point) const
+    {
+        //TODO: Construct useful messages here.
+        if (static_cast<unsigned int>(point.getX()) > Globals::M || 0 == point.getX()) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
+        if (static_cast<unsigned int>(point.getY()) > Globals::N || 0 == point.getY()) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+    }
+    
+    void verifyMove(int player_number, const Move &move)
+    {
+        //TODO: Construct useful messages here.
+        const Point &from = move.getFrom();
+        const Point &to = move.getTo();
+        
+        verifyCoordinatesInRange(from);
+        verifyCoordinatesInRange(to);
+        
+        int owning_player = board->getPlayer(from);
+        
+        /* Make sure the player attempted to move its own piece.. */
+        if (owning_player != player_number) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
+        /* You can't move pieces into spaces owned by yourself.. */
+        if (owning_player == player_number) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
+        /* All good! */
+    }
+    
+    void verifyJokerChange(const JokerChange &joker_change)
+    {
+    }
+    
+    void invokeMove(PlayerAlgorithm *player, int player_number)
+    {
+        unique_ptr<Move> move = player->getMove();
+        verifyMove(player_number, *move);
+        
+        unique_ptr<JokerChange> joker_change = player1->getJokerChange();
+        
+        if (nullptr != joker_change) {
+            verifyJokerChange(*joker_change);
+        }
+        
+        /* OK - time to apply the logic to the board. */
+    }
+    
     /*
      * This method actually runs the players' supplied moves, one by one.
-     * It starts by 
+     * It returns the winner (0 in case of a tie)
      */
-    void doMoves()
+    int doMoves()
     {
         doInitialMoves();
         
-        for(;;) {
+        for(size_t move_count = 0; move_count < 50; ++move_count) {
+            /* Do we have a winner yet? */
+            if (0 == player1_flags || 0 == player2_flags) {
+                if (0 == player1_flags && 0 == player2_flags) return 0;
+                if (0 == player1_flags) return 2;
+                return 1;
+            }
             
+            try {
+                invokeMove(player1, 1);
+            } catch (const BaseError& error) {
+                //TODO: handle error
+            }
         }
+        
+        /* We got to a tie. */
+        return 0;
     }
 
 public:
     //TODO: Complete constructor
     void run()
     {
+        Globals::initGlobals();
         //TODO: Instantiate according to command line.
         FilePlayerAlgorithm player1_algorithm, player2_algorithm;
         player1 = &player1_algorithm;
@@ -219,6 +300,8 @@ public:
         
         player1->getInitialPositions(1, player1_positions);
         player2->getInitialPositions(2, player2_positions);
+        
+        bool player1_lost = false, player2_lost = false;
         
         try {
             verifyPlayerPosition(1, player1_positions);
@@ -234,7 +317,14 @@ public:
             player2_lost = true;
         }
         
-        //TODO: Handle case one of the guys lost
+        if (player1_lost || player2_lost) {
+            //TODO: Handle case one of the guys lost
+        }
+        
+        player1_flags = Globals::ALLOWED_PIECES_COUNT['F'];
+        player2_flags = Globals::ALLOWED_PIECES_COUNT['F'];
+        
+        doMoves();
     }
 };
 
