@@ -7,6 +7,9 @@
 #include "Globals.h"
 #include "ConcretePiecePosition.h"
 #include "BadFilePathError.h"
+#include "Move.h"
+#include "ConcreteMove.h"
+#include "JokerChange.h"
 
 #include <stdlib.h>
 #include <vector>
@@ -42,8 +45,20 @@ static inline bool is_valid_type(char type)
 class FilePlayerAlgorithm : public PlayerAlgorithm
 {
 private:
-    void doParse(int player,
-                 std::ifstream &player_file,
+    /* The player this algorithms handles */
+    int player;
+    /* The coordinates for a joker move, if one is supplied. */
+    int joker_x, joker_y;
+    char new_joker_type;
+    bool joker_parsing_failed;
+    std::ifstream player_move_file;
+    
+    void parseJokerParameters()
+    {
+        
+    }
+
+    void parseBoardFile(std::ifstream &player_file,
                  std::vector<unique_ptr<PiecePosition>> &vectorToFill) const
     {
         //TODO: Factor to smaller methods.
@@ -147,8 +162,11 @@ private:
     }
 
 public:
+    PlayerAlgorithm() : player(0), player_move_file() {}
+
     virtual void getInitialPositions(int player, std::vector<unique_ptr<PiecePosition>>& vectorToFill) override
     {
+        this->player = player;
         std::stringstream file_path;
         std::ifstream player_board_file;
         
@@ -159,14 +177,69 @@ public:
             throw BadFilePathError(file_path.str());
         }
         
+        file_path.clear();
+        file_path << "./player" << player << ".rps_moves";
+        player_move_file.open(file_path.str());
+        
+        if (player_move_file.fail()) {
+            throw BadFilePathError(file_path.str());
+        }
+        
         /* Let RAII take care of the file descriptor for us in case of exceptions. */
-        doParse(player, player_board_file, vectorToFill);
+        parseBoardFile(player_board_file, vectorToFill);
     }
     
+    /* We cast to void in these methods to avoid the unreferenced parameter warning. */
     virtual void notifyOnInitialBoard(const Board& b, const std::vector<unique_ptr<FightInfo>>& fights) override
     {
         (void) b;
         (void) fights;
+    }
+    
+    virtual void notifyOnOpponentMove(const Move& move) override
+    {
+        (void) move;
+    }
+    
+    virtual void notifyFightResult(const FightInfo& fightInfo) override
+    {
+        (void) fightInfo;
+    }
+    
+    virtual unique_ptr<Move> getMove() override
+    {
+        std::string line;
+        std::getline(player_move_file, line);
+        
+        joker_x = 0;
+        joker_y = 0;
+        new_joker_type = '#';
+        joker_parsing_failed = false;
+        
+        // TODO: Handle error.
+        if (player_move_file.fail()) {
+        }
+        
+        std::stringstream formatted_line(line);
+        int source_x, source_y, dest_x, dest_y;
+        
+        formatted_line >> source_x >> source_y >> dest_x >> dest_y;
+        
+        if (formatted_line.fail()) {
+            //TODO: handle error
+        }
+    }
+    
+    virtual unique_ptr<JokerChange> getJokerChange() override
+    {
+        if (joker_parsing_failed) {
+            //TODO: Handle error.
+        }
+        
+        //TODO: Implement me.
+        if (0 == joker_x || 0 == joker_y || '#' == new_joker_type) {
+            return nullptr;
+        }
     }
 };
 
