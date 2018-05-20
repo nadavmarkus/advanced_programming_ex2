@@ -240,11 +240,36 @@ private:
             throw BadMoveError(std::string("Invalid move"));
         }
         
+        /* Make sure the player didn't attempt to move an unmovable piece. */
+        const ConcretePiecePosition& position = board->getPiece(from);
+        
+        char type = position.getPiece();
+        
+        if ('J' == type) type = position.getJokerRep();
+        
+        if (!GameUtils::isMovablePiece(type)) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
         /* All good! */
     }
     
-    void verifyJokerChange(const JokerChange &joker_change)
+    void verifyJokerChange(int player_number, const JokerChange &joker_change)
     {
+        //TODO: Construct useful messages here.
+        const Point& where = joker_change.getJokerChangePosition();
+        verifyCoordinatesInRange(where);
+        char new_joker_type = joker_change.getJokerNewRep();
+        
+        if (!GameUtils::isValidJokerMasqueradeType(new_joker_type)) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
+        int owning_player = board->getPlayer(where);
+        
+        if (owning_player != player_number) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
     }
     
     void invokeMove(PlayerAlgorithm *player, int player_number)
@@ -254,11 +279,13 @@ private:
         
         unique_ptr<JokerChange> joker_change = player1->getJokerChange();
         
-        if (nullptr != joker_change) {
-            verifyJokerChange(*joker_change);
-        }
-        
         /* OK - time to apply the logic to the board. */
+        
+        /* And now to apply the potential joker change. */
+        if (nullptr != joker_change) {
+            verifyJokerChange(player_number, *joker_change);
+            //TODO: Invoke actual change.
+        }        
     }
     
     /*
@@ -279,6 +306,18 @@ private:
             
             try {
                 invokeMove(player1, 1);
+            } catch (const BaseError& error) {
+                //TODO: handle error
+            }
+            
+            if (0 == player1_flags || 0 == player2_flags) {
+                if (0 == player1_flags && 0 == player2_flags) return 0;
+                if (0 == player1_flags) return 2;
+                return 1;
+            }
+            
+            try {
+                invokeMove(player1, 2);
             } catch (const BaseError& error) {
                 //TODO: handle error
             }

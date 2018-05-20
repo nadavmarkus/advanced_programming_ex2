@@ -31,6 +31,11 @@ public:
     {
         board[position.getPosition().getY() - 1][position.getPosition().getX() - 1] = position;
     }
+    
+    const ConcretePiecePosition& getPiece(const Point& point) const
+    {
+        return board[point.getY() - 1][point.getX() - 1];
+    }
 };
 
 #endif

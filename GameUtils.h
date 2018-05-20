@@ -40,6 +40,21 @@ namespace GameUtils
                 return false;
         }
     }
+    
+    bool isMovablePiece(char type)
+    {
+        switch (type) {
+            case 'R':
+                /* Fallthrough */
+            case 'P':
+                /* Fallthrough */
+            case 'S':
+                return true;
+                
+            default:
+                return false;
+        }
+    }
 }
 
 #endif
