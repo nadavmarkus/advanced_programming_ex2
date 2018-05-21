@@ -23,6 +23,7 @@
 #include <iostream>
 #include <assert.h>
 #include <stdlib.h>
+#include <sstream>
 
 class Game
 {
@@ -43,11 +44,15 @@ private:
         char masquerade_type = position.getJokerRep();
         char piece_type = position.getPiece();
         
-        if ('F' != piece_type && '#' != masquerade_type) {
-            error_message << "Player " << player << " attempted to supply masquerade type for non joker";
-            throw PositionError(error_message.str());
+        if ('J' != piece_type) {
+            if ('#' != masquerade_type) {
+                error_message << "Player " << player << " attempted to supply masquerade type for non joker";
+                throw PositionError(error_message.str());
+            }
+            return;
         }
         
+        /* If we got here, we are dealing with a joker. */
         if (!GameUtils::isValidJokerMasqueradeType(masquerade_type)) {
             error_message << "Player " << player << " joker attempted to be invalid piece";
             throw PositionError(error_message.str());
@@ -203,6 +208,8 @@ private:
         for (auto const &point_to_piece: point_to_piece_position) {
             board.addPosition(point_to_piece.second);
         }
+        
+        board.printBoard();
         
         player1->notifyOnInitialBoard(board, fights);
         player2->notifyOnInitialBoard(board, fights);
@@ -415,6 +422,8 @@ public:
         player1 = &player1_algorithm;
         player2 = &player2_algorithm;
         
+        board.printBoard();
+        
         player1->getInitialPositions(1, player1_positions);
         player2->getInitialPositions(2, player2_positions);
         
@@ -434,15 +443,27 @@ public:
             player2_lost = true;
         }
         
+        int winner;
+        
         if (player1_lost || player2_lost) {
             //TODO: Handle case one of the guys lost
+            if (player1_lost && player2_lost) {
+                winner = 0;
+            } else if (player1_lost) {
+                winner = 2;
+            } else {
+                winner = 1;
+            }
+            
+            goto out;
         }
         
         player1_flags = Globals::ALLOWED_PIECES_COUNT['F'];
         player2_flags = Globals::ALLOWED_PIECES_COUNT['F'];
         
-        int winner = doMoves();
+        winner = doMoves();
         
+    out:
         std::cout << "Winner is " << winner << std::endl;
     }
 };

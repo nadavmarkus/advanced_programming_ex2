@@ -63,7 +63,7 @@ private:
     
         for (;;)
         {
-            std::getline(player_file, line);
+            std::getline(player_file, line, '\n');
             
             if (player_file.fail() && player_file.eof()) {
                 break;
@@ -124,7 +124,7 @@ public:
             throw BadFilePathError(file_path.str());
         }
         
-        file_path.clear();
+        file_path.str("");
         file_path << "./player" << player << ".rps_moves";
         player_move_file.open(file_path.str());
         
