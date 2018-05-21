@@ -34,7 +34,7 @@ public:
                           int x,
                           int y,
                           char type,
-                          char joker_type) : player(player),
+                          char joker_type='#') : player(player),
                                              point(std::make_unique<ConcretePoint>(x, y)),
                                              type(type),
                                              joker_type(joker_type) {}
@@ -64,7 +64,7 @@ public:
         return *this;
     }
     
-    void reset(bool destroy_point = true)
+    void reset(bool destroy_point=true)
     {
         type = '#';
         joker_type = '#';
