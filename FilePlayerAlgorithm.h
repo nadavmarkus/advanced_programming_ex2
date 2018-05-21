@@ -57,7 +57,6 @@ private:
     void parseBoardFile(std::ifstream &player_file,
                         std::vector<unique_ptr<PiecePosition>> &vectorToFill) const
     {
-        //TODO: Factor to smaller methods.
         std::string line;
         char type, masquerade_type;
         unsigned int x, y;
@@ -73,7 +72,7 @@ private:
             if (player_file.fail()) {
                 //TODO: Handle without exception and report to invoking game manager.
                 //error_message << "Failed to read player's input file." << std::endl;
-                //throw FileParsingError(error_message.str());
+                vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(-1, -1, -1,  '#', '#'));
             }
             
             /* Skip empty lines. */
@@ -88,7 +87,7 @@ private:
             if (line_formmater.fail()) {
                 //TODO: Handle without exception and report to invoking game manager.
                 //error_message << "Player " << player << " bad format at line " << line_number;
-                //throw FileParsingError(error_message.str(), line_number);
+                vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(-1, -1, -1,  '#', '#'));
             }
             
             masquerade_type = '#';
@@ -100,13 +99,12 @@ private:
                 if (line_formmater.fail()) {
                     //TODO: Handle without exception and report to invoking game manager.
                     //error_message << "Player " << player << " bad joker command at line " << line_number;
-                    //throw FileParsingError(error_message.str(), line_number);
+                    vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(-1, -1, -1,  '#', '#'));
                 }
             }
             
             vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(player, x, y, type, masquerade_type));
         }
-        
     }
 
 public:
@@ -167,6 +165,7 @@ public:
         
         // TODO: Handle error.
         if (player_move_file.fail()) {
+            return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
         
         std::stringstream formatted_line(line);
@@ -176,11 +175,11 @@ public:
         
         if (formatted_line.fail()) {
             //TODO: handle error
+            return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
         
         parseJokerParameters(formatted_line);
-        std::unique_ptr<Move> result = std::make_unique<ConcreteMove>(source_x, source_y, dest_x, dest_y);
-        return result;
+        return std::make_unique<ConcreteMove>(source_x, source_y, dest_x, dest_y);
 
     }
     
@@ -188,6 +187,7 @@ public:
     {
         if (joker_parsing_failed) {
             //TODO: Handle error.
+            return std::make_unique<ConcreteJokerChange>(-1, -1, '#');
         }
         
         if (0 == joker_x && 0 == joker_y && '#' == new_joker_type) {

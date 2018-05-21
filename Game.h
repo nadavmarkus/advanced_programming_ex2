@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <map>
+#include <iostream>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -243,7 +244,7 @@ private:
         }
         
         /* Make sure the player didn't attempt to move an unmovable piece. */
-        const ConcretePiecePosition& position = board->getPiece(from);
+        const ConcretePiecePosition &position = board->getPiece(from);
         
         char type = position.getPiece();
         
@@ -274,6 +275,30 @@ private:
         }
     }
     
+    void extractPieceTypes(const Point &to,
+                           const Point &from,
+                           char &player1_type,
+                           char &player2_type) const
+    {
+        const ConcretePiecePosition &toPiece = board->getPiece(to);
+        const ConcretePiecePosition &fromPiece = board->getPiece(from);
+    
+        if (1 == fromPiece.getPlayer()) {
+            assert(2 == toPiece.getPlayer());
+            player1_type = fromPiece.getPiece();
+            player2_type = toPiece.getPiece();
+            
+        } else if (1 == toPiece.getPlayer()) {
+            assert(2 == fromPiece.getPlayer());
+            player1_type = toPiece.getPiece();
+            player2_type = fromPiece.getPiece();
+
+        } else {
+            /* Should not happen. */
+            assert(false);
+        }
+    }
+    
     void invokeMove(PlayerAlgorithm *player, int player_number)
     {
         unique_ptr<Move> move = player->getMove();
@@ -290,6 +315,10 @@ private:
         /* This surely means that the other player is the opponent! */
         if (0 != other_player) {
             assert(other_player == 1 + (player_number % 2));
+            /* This information will later be used in the fight info notification. */
+            char player1_type, player2_type;
+            extractPieceTypes(to, from, player1_type, player2_type);
+            
             int winner = calculateWinner(board->getPiece(from), board->getPiece(to));
             
             /* Attacker won - update accordingly. */
@@ -310,6 +339,11 @@ private:
                 assert(false);
             }
             
+            /* Notify players on result. */
+            ConcreteFightInfo info(winner, player1_type, player2_type, to.getX(), to.getY());
+            player1->notifyFightResult(info);
+            player2->notifyFightResult(info);
+            
         } else {
             board->movePiece(from, to);
         }
@@ -318,7 +352,14 @@ private:
         if (nullptr != joker_change) {
             verifyJokerChange(player_number, *joker_change);
             board->updateJokerPiece(joker_change->getJokerChangePosition(), joker_change->getJokerNewRep());
-        }        
+        }
+        
+        /* Notify the other player on the current player's move. */
+        if (player1 == player) {
+            player2->notifyOnOpponentMove(*move);
+        } else {
+            player1->notifyOnOpponentMove(*move);
+        }
     }
     
     /*
@@ -342,6 +383,7 @@ private:
                 invokeMove(player1, 1);
             } catch (const BaseError& error) {
                 //TODO: handle error
+                return 2;
             }
             
             if (0 == player1_flags || 0 == player2_flags) {
@@ -355,6 +397,7 @@ private:
                 invokeMove(player1, 2);
             } catch (const BaseError& error) {
                 //TODO: handle error
+                return 1;
             }
         }
         
@@ -398,7 +441,9 @@ public:
         player1_flags = Globals::ALLOWED_PIECES_COUNT['F'];
         player2_flags = Globals::ALLOWED_PIECES_COUNT['F'];
         
-        doMoves();
+        int winner = doMoves();
+        
+        std::cout << "Winner is " << winner << std::endl;
     }
 };
 
