@@ -82,7 +82,7 @@ private:
             cur_coord = std::make_pair(x, y);
             
             if (used_coords.count(cur_coord)) {
-                error_message << "Player " << player << " two overlapping pieces at " << x + 1 << "," << y + 1;
+                error_message << "Player " << player << " two overlapping pieces at " << x << "," << y;
                 throw PositionError(error_message.str());
             }
             
@@ -404,6 +404,7 @@ private:
                 invokeMove(player1, 1);
             } catch (const BaseError &error) {
                 //TODO: handle error
+                std::cout << "Player 1 move fail " << error.getMessage() << std::endl;
                 return 2;
             }
             
@@ -420,6 +421,7 @@ private:
                 invokeMove(player2, 2);
             } catch (const BaseError &error) {
                 //TODO: handle error
+                std::cout << "Player 2 move fail " << error.getMessage() << std::endl;
                 return 1;
             }
             
@@ -440,8 +442,6 @@ public:
         player1 = &player1_algorithm;
         player2 = &player2_algorithm;
         
-        board.printBoard();
-        
         player1->getInitialPositions(1, player1_positions);
         player2->getInitialPositions(2, player2_positions);
         
@@ -451,6 +451,7 @@ public:
             verifyPlayerPosition(1, player1_positions);
         } catch (const BaseError &error) {
             player1_loss_reason = error.getMessage();
+            std::cout << "Player 1 lost position " << player1_loss_reason << std::endl;
             player1_lost = true;
         }
         
@@ -459,6 +460,7 @@ public:
         } catch (const BaseError &error) {
             player2_loss_reason = error.getMessage();
             player2_lost = true;
+            std::cout << "Player 2 lost position " << player2_loss_reason << std::endl;
         }
         
         int winner;
