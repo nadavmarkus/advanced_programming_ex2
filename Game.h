@@ -33,7 +33,7 @@ private:
     std::vector<std::unique_ptr<PiecePosition>> player2_positions;
     PlayerAlgorithm *player1;
     PlayerAlgorithm *player2;
-    std::unique_ptr<ConcreteBoard> board;
+    ConcreteBoard board;
     size_t player1_flags;
     size_t player2_flags;
     
@@ -201,11 +201,11 @@ private:
         
         /* All right, we are finished. we can populate the board, and call the notify routines. */
         for (auto const &point_to_piece: point_to_piece_position) {
-            board->addPosition(point_to_piece.second);
+            board.addPosition(point_to_piece.second);
         }
         
-        player1->notifyOnInitialBoard(*board, fights);
-        player2->notifyOnInitialBoard(*board, fights);
+        player1->notifyOnInitialBoard(board, fights);
+        player2->notifyOnInitialBoard(board, fights);
     }
     
     void verifyCoordinatesInRange(const Point &point) const
@@ -229,14 +229,14 @@ private:
         verifyCoordinatesInRange(from);
         verifyCoordinatesInRange(to);
         
-        int from_owning_player = board->getPlayer(from);
+        int from_owning_player = board.getPlayer(from);
         
         /* Make sure the player attempted to move its own piece.. */
         if (from_owning_player != player_number) {
             throw BadMoveError(std::string("Invalid move"));
         }
         
-        int target_owning_player = board->getPlayer(to);
+        int target_owning_player = board.getPlayer(to);
         
         /* You can't move pieces into spaces owned by yourself.. */
         if (target_owning_player == player_number) {
@@ -244,7 +244,7 @@ private:
         }
         
         /* Make sure the player didn't attempt to move an unmovable piece. */
-        const ConcretePiecePosition &position = board->getPiece(from);
+        const ConcretePiecePosition &position = board.getPiece(from);
         
         char type = position.getPiece();
         
@@ -268,7 +268,7 @@ private:
             throw BadMoveError(std::string("Invalid move"));
         }
         
-        int owning_player = board->getPlayer(where);
+        int owning_player = board.getPlayer(where);
         
         if (owning_player != player_number) {
             throw BadMoveError(std::string("Invalid move"));
@@ -280,8 +280,8 @@ private:
                            char &player1_type,
                            char &player2_type) const
     {
-        const ConcretePiecePosition &toPiece = board->getPiece(to);
-        const ConcretePiecePosition &fromPiece = board->getPiece(from);
+        const ConcretePiecePosition &toPiece = board.getPiece(to);
+        const ConcretePiecePosition &fromPiece = board.getPiece(from);
     
         if (1 == fromPiece.getPlayer()) {
             assert(2 == toPiece.getPlayer());
@@ -307,7 +307,7 @@ private:
         unique_ptr<JokerChange> joker_change = player->getJokerChange();
         
         /* OK - time to apply the logic to the board. */
-        int other_player = board->getPlayer(move->getTo());
+        int other_player = board.getPlayer(move->getTo());
         
         const Point &from = move->getFrom();
         const Point &to = move->getTo();
@@ -319,20 +319,20 @@ private:
             char player1_type, player2_type;
             extractPieceTypes(to, from, player1_type, player2_type);
             
-            int winner = calculateWinner(board->getPiece(from), board->getPiece(to));
+            int winner = calculateWinner(board.getPiece(from), board.getPiece(to));
             
             /* Attacker won - update accordingly. */
             if (winner == player_number) {
-                board->movePiece(from, to);
+                board.movePiece(from, to);
             
             /* Defender won - update accordingly. */
             } else if (winner == other_player) {
-                board->invalidatePosition(from);
+                board.invalidatePosition(from);
                 
             /* Tie - both positions are invalidated. */
             } else if (0 == winner) {
-                board->invalidatePosition(to);
-                board->invalidatePosition(from);
+                board.invalidatePosition(to);
+                board.invalidatePosition(from);
                 
             } else {
                 /* Should not happen. */
@@ -345,13 +345,13 @@ private:
             player2->notifyFightResult(info);
             
         } else {
-            board->movePiece(from, to);
+            board.movePiece(from, to);
         }
         
         /* And now to apply the potential joker change. */
         if (nullptr != joker_change) {
             verifyJokerChange(player_number, *joker_change);
-            board->updateJokerPiece(joker_change->getJokerChangePosition(), joker_change->getJokerNewRep());
+            board.updateJokerPiece(joker_change->getJokerChangePosition(), joker_change->getJokerNewRep());
         }
         
         /* Notify the other player on the current player's move. */
@@ -381,7 +381,7 @@ private:
             
             try {
                 invokeMove(player1, 1);
-            } catch (const BaseError& error) {
+            } catch (const BaseError &error) {
                 //TODO: handle error
                 return 2;
             }
@@ -395,7 +395,7 @@ private:
             
             try {
                 invokeMove(player1, 2);
-            } catch (const BaseError& error) {
+            } catch (const BaseError &error) {
                 //TODO: handle error
                 return 1;
             }

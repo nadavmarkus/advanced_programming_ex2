@@ -6,6 +6,7 @@
 #include "ConcretePiecePosition.h"
 #include <stdlib.h>
 #include <utility>
+#include <iostream>
 
 
 class ConcreteBoard : public Board
@@ -51,6 +52,16 @@ public:
     void updateJokerPiece(const Point &where, char new_joker_type)
     {
         board[where.getY() - 1][where.getX() - 1].setJokerRep(new_joker_type);
+    }
+    
+    void printBoard() const
+    {
+        for (size_t i = 0; i < Globals::N; ++i) {
+            for (size_t j = 0; j < Globals::M; ++j) {
+                std::cout << board[i][j].getPiece() << " ";
+            }
+            std::cout << std::endl;
+        }
     }
 };
 
