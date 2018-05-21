@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <utility>
 #include <iostream>
+#include <cctype>
 
 
 class ConcreteBoard : public Board
@@ -58,7 +59,11 @@ public:
     {
         for (size_t i = 0; i < Globals::N; ++i) {
             for (size_t j = 0; j < Globals::M; ++j) {
-                std::cout << board[i][j].getPiece() << " ";
+                char c = board[i][j].getPiece();
+                if (board[i][j].getPlayer() == 2) {
+                    c = tolower(c);
+                }
+                std::cout << c << " ";
             }
             std::cout << std::endl;
         }

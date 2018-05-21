@@ -261,6 +261,18 @@ private:
             throw BadMoveError(std::string("Invalid move"));
         }
         
+        /* Make sure that the diff in coordinates is only 1 in one axis */
+        int x_diff = abs(from.getX() - to.getX());
+        int y_diff = abs(from.getY() - to.getY());
+        
+        if (x_diff > 1 || y_diff > 1) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
+        if (!((1 == x_diff) ^ (1 == y_diff))) {
+            throw BadMoveError(std::string("Invalid move"));
+        }
+        
         /* All good! */
     }
     
@@ -393,6 +405,8 @@ private:
                 return 2;
             }
             
+            board.printBoard();
+            
             if (0 == player1_flags || 0 == player2_flags) {
                 //TODO: add appropriate messages for winning
                 if (0 == player1_flags && 0 == player2_flags) return 0;
@@ -401,11 +415,13 @@ private:
             }
             
             try {
-                invokeMove(player1, 2);
+                invokeMove(player2, 2);
             } catch (const BaseError &error) {
                 //TODO: handle error
                 return 1;
             }
+            
+            board.printBoard();
         }
         
         /* We got to a tie. */
