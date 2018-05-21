@@ -116,11 +116,8 @@ private:
     int calculateWinner(const ConcretePiecePosition &player1_piece,
                         const ConcretePiecePosition &player2_piece)
     {
-        char piece1_type = player1_piece.getPiece();
-        char piece2_type = player2_piece.getPiece();
-        
-        if ('J' == piece1_type) piece1_type = player1_piece.getJokerRep();
-        if ('J' == piece2_type) piece2_type = player2_piece.getJokerRep();
+        char piece1_type = player1_piece.effectivePieceType();
+        char piece2_type = player2_piece.effectivePieceType();
         
         /* Both pieces are destroyed in this case. */
         if ('B' == piece1_type || 'B' == piece2_type || piece1_type == piece2_type) {
@@ -304,13 +301,13 @@ private:
     
         if (1 == fromPiece.getPlayer()) {
             assert(2 == toPiece.getPlayer());
-            player1_type = fromPiece.getPiece();
-            player2_type = toPiece.getPiece();
+            player1_type = fromPiece.effectivePieceType();
+            player2_type = toPiece.effectivePieceType();
             
         } else if (1 == toPiece.getPlayer()) {
             assert(2 == fromPiece.getPlayer());
-            player1_type = toPiece.getPiece();
-            player2_type = fromPiece.getPiece();
+            player1_type = toPiece.effectivePieceType();
+            player2_type = fromPiece.effectivePieceType();
 
         } else {
             /* Should not happen. */
@@ -338,7 +335,12 @@ private:
             char player1_type, player2_type;
             extractPieceTypes(to, from, player1_type, player2_type);
             
-            int winner = calculateWinner(board.getPiece(from), board.getPiece(to));
+            int winner;
+            if (1 == player_number) {
+                winner = calculateWinner(board.getPiece(from), board.getPiece(to));
+            } else {
+                winner = calculateWinner(board.getPiece(to), board.getPiece(from));
+            }
             
             /* Attacker won - update accordingly. */
             if (winner == player_number) {

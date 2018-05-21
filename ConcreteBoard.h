@@ -60,6 +60,9 @@ public:
         for (size_t i = 0; i < Globals::N; ++i) {
             for (size_t j = 0; j < Globals::M; ++j) {
                 char c = board[i][j].getPiece();
+                // if ('J' == c) {
+                    // c = board[i][j].getJokerRep();
+                // }
                 if (board[i][j].getPlayer() == 2) {
                     c = tolower(c);
                 }
