@@ -12,6 +12,7 @@
 #include "ConcretePoint.h"
 #include "ConcreteMove.h"
 #include "GameUtils.h"
+#include "ConcreteFightInfo.h"
 
 #include <memory>
 #include <vector>
@@ -32,20 +33,17 @@ private:
     int my_player_number;
     int other_player;
     std::vector<unique_ptr<PiecePosition>> *vector_to_fill;
-    //TODO: Remove these from being instance members if I don't intend to move the joker.
-    bool flag_up;
-    bool flag_left;
     std::default_random_engine gen;
     std::uniform_int_distribution<int> bool_generator;
     std::uniform_int_distribution<int> x_generator;
     std::uniform_int_distribution<int> y_generator;
     std::set<ConcretePoint> possible_opponent_flag_locations;
-    
     /*
-     * We can invalidate opponent's move and not update the board
-     * if we won/ there was a tie. This gets updated the notification on fights.
+     * Used to track who is executing the current move.
      */
-    bool invalidate_move;
+    bool my_move;
+    std::unique_ptr<Move> last_move;
+    std::unique_ptr<FightInfo> last_fight_result;
     
     void fillVectorAndUpdateBoard(int x, int y, char type, char joker_type='#')
     {
@@ -91,21 +89,33 @@ private:
     
     /*
      * Updates our view with known other player unit types.
-     * Note that we don't need to handle ties, since in case of a tie
-     * a 0 will be reported as the player number, and the initialization loop
-     * would have invalidated the position.
+     * This method is only called for the initial fights.
      */
-    void updateWithFightResult(const FightInfo &info)
+    void updateWithInitialFightResult(const FightInfo &info)
     {
+        const Point &where = info.getPosition();
         if (other_player == info.getWinner()) {
-            const Point &where = info.getPosition();
             const ConcretePiecePosition pos(other_player, where, info.getPiece(other_player));
             my_board_view.addPosition(pos);
             
-            /* This also means that the position doesn't contain a flag. */
-            possible_opponent_flag_locations.erase(where);
-        } else if(my_player_number == info.getWinner()) {
+            /* This also means that the position doesn't contain a flag - a flag can't win. */
+            if (possible_opponent_flag_locations.count(where)) {
+                possible_opponent_flag_locations.erase(where);
+            }
             
+        } else if(my_player_number == info.getWinner()) {
+            /* Nothing to do really - they just lost a piece. */
+            if (possible_opponent_flag_locations.count(where)) {
+                possible_opponent_flag_locations.erase(where);
+            }
+            
+        /* Both units got annihilated. */
+        } else if (0 == info.getWinner()) {
+            my_board_view.invalidatePosition(where);
+            
+            if (possible_opponent_flag_locations.count(where)) {
+                possible_opponent_flag_locations.erase(where);
+            }
             
         } else {
             /* Should not happen. */
@@ -230,7 +240,6 @@ private:
     
     unique_ptr<Move> searchAndDestroy() const
     {
-        //TODO: Implement me
         piece_set_iterator it = possible_opponent_flag_locations.begin();
         
         assert(possible_opponent_flag_locations.size() > 0);
@@ -294,19 +303,97 @@ private:
         }
     }
     
+    void flushPreviousMovesData()
+    {
+        if (nullptr == last_move) {
+            /* This can happen if we are player1 and this is the first turn. Nothing to do. */
+            return;
+        }
+     
+        /* 
+         * This means we just got invoked before the next opponent's move.
+         * This means that last_move is our move.
+         */
+        if (my_move) {
+            /* Did a fight occur? */
+            if (nullptr == last_fight_result) {
+                /* No? this means our move was for sure successfully executed. */
+                my_board_view.movePiece(*last_move);
+                return;
+            }
+            
+            /* OK - a fight occurred. We were the attacker, did we win? */
+            if (last_fight_result->getWinner() == my_player_number) {
+                /* We can carry on with just moving the piece. */
+                my_board_view.movePiece(*last_move);
+            /* It was a tie? */
+            
+            } else if (0 == last_fight_result->getWinner()) {
+                my_board_view.invalidatePosition(last_fight_result->getPosition());
+                my_board_view.invalidatePosition(last_move->getFrom());
+                
+            /* Other player won. */
+            } else {
+                assert(other_player == last_fight_result->getWinner());
+                /* We lost for some reason (perhaps a joker change). Update accordingly. */
+                my_board_view.invalidatePosition(last_move->getFrom());
+                /* We can now update the position of the target with our new found information. */
+                const ConcretePiecePosition pos(other_player,
+                                                last_move->getTo(),
+                                                last_fight_result->getPiece(other_player));
+                my_board_view.addPosition(pos);
+            }
+        
+        /* 
+         * This means we just got invoked before our own turn.
+         * This means that last_move is the opponent's move.
+         */
+        } else {
+            /* No fight? we can just update. */
+            if (nullptr == last_fight_result) {
+                my_board_view.movePiece(*last_move);
+                return;
+            }
+            
+            /* A fight did occur. Update accordingly. */
+            /* Other player tried to attack us, but failed. */
+            if (my_player_number == last_fight_result->getWinner()) {
+                my_board_view.invalidatePosition(last_move->getFrom());
+                
+            /* A tie. */
+            } else if (0 == last_fight_result->getWinner()) {
+                my_board_view.invalidatePosition(last_move->getTo());
+                my_board_view.invalidatePosition(last_move->getFrom());
+                
+            /* Other player tried to attack, and succeeded. */
+            } else {
+                assert(other_player == last_fight_result->getWinner());
+                const ConcretePiecePosition pos(other_player,
+                                                last_move->getTo(),
+                                                last_fight_result->getPiece(other_player));
+                my_board_view.addPosition(pos);
+                my_board_view.invalidatePosition(last_move->getFrom());
+            }
+        }
+        
+        /* Make sure the previous data is invalidated. */
+        last_fight_result = nullptr;
+        last_move = nullptr;
+    }
+    
 public:
     AutoPlayerAlgorithm() : my_board_view(),
                             my_player_number(0),
                             other_player(0),
                             vector_to_fill(nullptr),
-                            flag_up(false),
-                            flag_left(false),
                             gen(),
                             bool_generator(0, 1),
                             x_generator(1, Globals::M),
                             y_generator(1, Globals::N),
                             possible_opponent_flag_locations(),
-                            invalidate_move(false) {}
+                            my_move(false),
+                            last_move(nullptr),
+                            last_fight_result(nullptr) {}
 
     /* Note: This algorithm assumes that there is a single flag and two jokers. */
     virtual void getInitialPositions(int player, std::vector<unique_ptr<PiecePosition>> &vectorToFill) override
@@ -319,8 +406,8 @@ public:
          * We will position our flag in one of the corners, than start surrounding it
          * with guarding bombs and pieces.
          */
-        flag_up = static_cast<bool>(bool_generator(gen));
-        flag_left = static_cast<bool>(bool_generator(gen));
+        bool flag_up = static_cast<bool>(bool_generator(gen));
+        bool flag_left = static_cast<bool>(bool_generator(gen));
         
         int x, y;
         
@@ -375,37 +462,24 @@ public:
         }
         
         for (auto const &info: fights) {
-            updateWithFightResult(*info);
+            updateWithInitialFightResult(*info);
         }
     }
     
     virtual void notifyOnOpponentMove(const Move& move) override
     {
-        const Point &from = move.getFrom();
-        const Point &to = move.getTo();
-    
-        /* A flag can't move. */
-        if (possible_opponent_flag_locations.end() != possible_opponent_flag_locations.find(from)) {
-            possible_opponent_flag_locations.erase(from);
-        }
-    
-        if (!invalidate_move) {
-            my_board_view.movePiece(from, to);
-        }
-        
-        /* Reset invalidation state for next move. */
-        invalidate_move = false;
+        flushPreviousMovesData();
+        my_move = false;
+        last_move = std::make_unique<ConcreteMove>(move);
     }
     
     virtual void notifyFightResult(const FightInfo &fightInfo) override
     {
-        updateWithFightResult(fightInfo);
-        
-        /* In this case the opponent's piece is destroyed, and when we will get a notification the move is invalid. */
-        //TODO: Invalidate only on fights that correlate to moves of an opponent.
-        if (0 == fightInfo.getWinner() || my_player_number == fightInfo.getWinner()) {
-            invalidate_move = true;
-        }
+        last_fight_result = std::make_unique<ConcreteFightInfo>(fightInfo.getWinner(),
+                                                                fightInfo.getPiece(1),
+                                                                fightInfo.getPiece(2),
+                                                                fightInfo.getPosition().getX(),
+                                                                fightInfo.getPosition().getY());
     }
     
     /*
@@ -416,20 +490,22 @@ public:
      */
     virtual unique_ptr<Move> getMove() override
     {
+        flushPreviousMovesData();
+        my_move = true;
         //TODO: update the board wit hthe moves.
         unique_ptr<Move> result;
         
         result = attemptToEatOpponentPiece();
         
         if (nullptr != result) {
-            my_board_view.movePiece(*result);
+            last_move = std::make_unique<ConcreteMove>(*result);
             return result;
         }
         
         result = attemptToFlee();
         
         if (nullptr != result) {
-            my_board_view.movePiece(*result);
+            last_move = std::make_unique<ConcreteMove>(*result);
             return result;
         }
         
@@ -444,7 +520,7 @@ public:
             return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
         
-        my_board_view.movePiece(*result);
+        last_move = std::make_unique<ConcreteMove>(*result);
         
         assert(nullptr != result);
         return result;

@@ -319,8 +319,16 @@ private:
     void invokeMove(PlayerAlgorithm *player, int player_number)
     {
         unique_ptr<Move> move = player->getMove();
+        
         assert(nullptr != move);
         verifyMove(player_number, *move);
+        
+        /* Notify the other player on the current player's move. */
+        if (player1 == player) {
+            player2->notifyOnOpponentMove(*move);
+        } else {
+            player1->notifyOnOpponentMove(*move);
+        }
         
         unique_ptr<JokerChange> joker_change = player->getJokerChange();
         
@@ -375,13 +383,6 @@ private:
         if (nullptr != joker_change) {
             verifyJokerChange(player_number, *joker_change);
             board.updateJokerPiece(joker_change->getJokerChangePosition(), joker_change->getJokerNewRep());
-        }
-        
-        /* Notify the other player on the current player's move. */
-        if (player1 == player) {
-            player2->notifyOnOpponentMove(*move);
-        } else {
-            player1->notifyOnOpponentMove(*move);
         }
     }
     
