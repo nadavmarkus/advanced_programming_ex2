@@ -23,6 +23,8 @@
 #include <random>
 #include <assert.h>
 #include <stdlib.h>
+#include <iostream>
+#include <chrono>
 
 using piece_set_iterator = std::set<ConcretePoint>::iterator;
 
@@ -68,6 +70,7 @@ private:
             }
             
             /* All right, we are good to go. */
+            std::cout << "Player " << my_player_number << " placing piece at " << x << "," << y << std::endl;
             fillVectorAndUpdateBoard(x, y, type);
             break;
         }
@@ -137,38 +140,34 @@ private:
                                 int &result_y) const
     {
         if (x < static_cast<int>(Globals::M)) {
-            if (y < static_cast<int>(Globals::N)) {
-                if (matchingPiece(x + 1, y + 1, type, player)) {
-                    result_x = x + 1;
-                    result_y = y + 1;
-                    return true;
-                }
-            }
-            
-            if (y > 1) {
-                if (matchingPiece(x + 1, y - 1, type, player)) {
-                    result_x = x + 1;
-                    result_y = y - 1;
-                    return true;
-                }
+            if (matchingPiece(x + 1, y, type, player)) {
+                result_x = x + 1;
+                result_y = y;
+                return true;
             }
         }
         
         if (x > 1) {
-            if (y < static_cast<int>(Globals::N)) {
-                if (matchingPiece(x - 1, y + 1, type, player)) {
-                    result_x = x - 1;
-                    result_y = y + 1;
-                    return true;
-                }
+            if (matchingPiece(x - 1, y, type, player)) {
+                result_x = x - 1;
+                result_y = y;
+                return true;
             }
+        }
             
-            if (y > 1) {
-                if (matchingPiece(x - 1, y - 1, type, player)) {
-                    result_x = x - 1;
-                    result_y = y - 1;
-                    return true;
-                }
+        if (y > 1) {
+            if (matchingPiece(x, y - 1, type, player)) {
+                result_x = x;
+                result_y = y - 1;
+                return true;
+            }
+        }
+            
+        if (y < static_cast<int>(Globals::N)) {
+            if (matchingPiece(x, y + 1, type, player)) {
+                result_x = x;
+                result_y = y + 1;
+                return true;
             }
         }
         
@@ -305,8 +304,10 @@ private:
     
     void flushPreviousMovesData()
     {
+        std::cout << "flushing for player " << my_player_number << std::endl;
         if (nullptr == last_move) {
             /* This can happen if we are player1 and this is the first turn. Nothing to do. */
+            std::cout << "Nothing to flush for player " << my_player_number << std::endl;
             return;
         }
      
@@ -315,6 +316,7 @@ private:
          * This means that last_move is our move.
          */
         if (my_move) {
+            std::cout << "Flushing own move for player " << my_player_number << std::endl;
             /* Did a fight occur? */
             if (nullptr == last_fight_result) {
                 /* No? this means our move was for sure successfully executed. */
@@ -349,6 +351,7 @@ private:
          * This means that last_move is the opponent's move.
          */
         } else {
+            std::cout << "Flushing other move for player " << my_player_number << std::endl;
             /* No fight? we can just update. */
             if (nullptr == last_fight_result) {
                 my_board_view.movePiece(*last_move);
@@ -393,7 +396,11 @@ public:
                             possible_opponent_flag_locations(),
                             my_move(false),
                             last_move(nullptr),
-                            last_fight_result(nullptr) {}
+                            last_fight_result(nullptr)
+    {
+        /* Initialize RNG. */
+        gen.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    }
 
     /* Note: This algorithm assumes that there is a single flag and two jokers. */
     virtual void getInitialPositions(int player, std::vector<unique_ptr<PiecePosition>> &vectorToFill) override
@@ -470,6 +477,7 @@ public:
     {
         flushPreviousMovesData();
         my_move = false;
+        std::cout << "Setting last move as opponent for " << my_player_number << std::endl;
         last_move = std::make_unique<ConcreteMove>(move);
     }
     
@@ -492,13 +500,17 @@ public:
     {
         flushPreviousMovesData();
         my_move = true;
-        //TODO: update the board wit hthe moves.
         unique_ptr<Move> result;
         
         result = attemptToEatOpponentPiece();
         
         if (nullptr != result) {
             last_move = std::make_unique<ConcreteMove>(*result);
+            
+            std::cout << "Player " << my_player_number << ": "  << "eat move" << std::endl;
+            std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
+            std::cout << " to " << result->getTo().getX() << "," << result->getTo().getY() << std::endl;
+            
             return result;
         }
         
@@ -506,6 +518,11 @@ public:
         
         if (nullptr != result) {
             last_move = std::make_unique<ConcreteMove>(*result);
+            
+            std::cout << "Player " << my_player_number << ":" << "flee move" << std::endl;
+            std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
+            std::cout << " to " << result->getTo().getX() << "," << result->getTo().getY() << std::endl;
+            
             return result;
         }
         
@@ -521,6 +538,10 @@ public:
         }
         
         last_move = std::make_unique<ConcreteMove>(*result);
+        
+        std::cout << "Player " << my_player_number << ":" << "search move"  << std::endl;
+        std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
+        std::cout << " to " << result->getTo().getX() << "," << result->getTo().getY() << std::endl;
         
         assert(nullptr != result);
         return result;
