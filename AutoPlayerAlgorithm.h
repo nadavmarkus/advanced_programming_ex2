@@ -229,6 +229,72 @@ private:
         return nullptr;
     }
     
+    unique_ptr<Move> searchAndDestroy() const
+    {
+        //TODO: Implement me
+        piece_set_iterator it = possible_opponent_flag_locations.begin();
+        
+        assert(possible_opponent_flag_locations.size() > 0);
+        assert(it != possible_opponent_flag_locations.end());
+        /* Let's try a movable piece with the closet coordinates. */
+        
+        size_t best_distance = SIZE_MAX;
+        
+        const ConcretePoint &to_destroy = *it;
+        ConcretePoint chosen_piece_location;
+        
+        for (size_t y = 1; y <= static_cast<int>(Globals::N); ++y) {
+            for (size_t x = 1; x <= static_cast<int>(Globals::M); ++x) {
+                const ConcretePiecePosition &pos = my_board_view.getPiece(x, y);
+                
+                if (my_player_number != pos.getPlayer()) {
+                    continue;
+                }
+                
+                if (!GameUtils::isMovablePiece(pos.effectivePieceType())) {
+                    continue;
+                }
+                
+                /* All right, we got a new candidate. */
+                size_t cur_distance = to_destroy.getDistance(pos.getPosition());
+                
+                if (cur_distance < best_distance) {
+                    best_distance = cur_distance;
+                    chosen_piece_location = pos.getPosition();
+                }
+            }
+        }
+        
+        /* This is bad - we are out of movable pieces. */
+        if (0 == chosen_piece_location.getX() || 0 == chosen_piece_location.getY()) {
+            return nullptr;
+        }
+        
+        assert(best_distance > 0);
+        
+        /* OK - let's construct the move. */
+        if (to_destroy.getX() > chosen_piece_location.getX()) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX() + 1,
+                                                  chosen_piece_location.getY());
+        } else if (to_destroy.getX() < chosen_piece_location.getX()) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX() - 1,
+                                                  chosen_piece_location.getY());
+        } else if (to_destroy.getY() > chosen_piece_location.getY()) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX(),
+                                                  chosen_piece_location.getY() + 1);
+        } else if (to_destroy.getY() < chosen_piece_location.getY()) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX(),
+                                                  chosen_piece_location.getY() - 1);
+        } else {
+            /* Should not happen. */
+            assert(false);
+        }
+    }
+    
 public:
     AutoPlayerAlgorithm() : my_board_view(),
                             my_player_number(0),
@@ -244,7 +310,7 @@ public:
                             possible_opponent_flag_locations(),
                             invalidate_move(false) {}
 
-    /* Note: This algorithm assumes that there is a single flag. */
+    /* Note: This algorithm assumes that there is a single flag and two jokers. */
     virtual void getInitialPositions(int player, std::vector<unique_ptr<PiecePosition>> &vectorToFill) override
     {
         vector_to_fill = &vectorToFill;
@@ -352,25 +418,38 @@ public:
      */
     virtual unique_ptr<Move> getMove() override
     {
-        //TODO: Implement me.
+        //TODO: update the board wit hthe moves.
         unique_ptr<Move> result;
         
         result = attemptToEatOpponentPiece();
         
         if (nullptr != result) {
+            my_board_view.movePiece(*result);
             return result;
         }
         
         result = attemptToFlee();
         
         if (nullptr != result) {
+            my_board_view.movePiece(*result);
             return result;
         }
         
         /* OK, lets try to find the opponent's flag. */
+        result =  searchAndDestroy();
         
-        /* We should not get here. */
-        return nullptr;
+        /* 
+         * This means we are out of movable pieces. Unfortunately, we can't even move the jokers
+         * since they are bombs (joker changes take effect for next move), so we have to report an invalid move..
+         */
+        if (nullptr == result) {
+            return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
+        }
+        
+        my_board_view.movePiece(*result);
+        
+        assert(nullptr != result);
+        return result;
     }
     
     virtual unique_ptr<JokerChange> getJokerChange() override

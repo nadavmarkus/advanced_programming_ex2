@@ -3,6 +3,9 @@
 
 #include "Point.h"
 
+#include <stdlib.h>
+#include <cmath>
+
 class ConcretePoint : public Point
 {
     private:
@@ -14,8 +17,26 @@ class ConcretePoint : public Point
         ConcretePoint(const Point &other): x(other.getX()), y(other.getY()) {}
         virtual int getX() const override { return x; }
         virtual int getY() const override { return y; }
+        
+        size_t getDistance(const Point &other) const
+        {
+            return static_cast<size_t>(abs(other.getX() - getX()) + abs(other.getY() - getY()));
+        }
+        
+        const ConcretePoint& operator=(const Point &other)
+        {
+            if (this == &other) {
+                return *this;
+            }
+            
+            x = other.getX();
+            y = other.getY();
+            
+            return *this;
+        }
 };
 
+/* Used so we can insert points to a set. */
 bool operator <(const Point &a, const Point &b)
 {
     /* Perform lexicographical comparison */

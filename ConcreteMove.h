@@ -17,6 +17,9 @@ public:
                  int y_from,
                  int x_to,
                  int y_to): from(x_from, y_from), to(x_to, y_to) {}
+    ConcreteMove(const Point &from,
+                 int x_to,
+                 int y_to): ConcreteMove(from.getX(), from.getY(), x_to, y_to) {}
     virtual const Point& getFrom() const override { return from; }
     virtual const Point& getTo() const override { return to; }
 };

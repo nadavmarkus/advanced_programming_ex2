@@ -56,6 +56,11 @@ public:
         board[to.getY() - 1][to.getX() - 1] = std::move(board[from.getY() - 1][from.getX() - 1]);
     }
     
+    void movePiece(const Move &move)
+    {
+        movePiece(move.getFrom(), move.getTo());
+    }
+    
     void invalidatePosition(const Point &where)
     {
         board[where.getY() - 1][where.getX() - 1].reset();
