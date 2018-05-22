@@ -127,7 +127,7 @@ private:
                                 int &result_x,
                                 int &result_y) const
     {
-        if ( x < static_cast<int>(Globals::M)) {
+        if (x < static_cast<int>(Globals::M)) {
             if (y < static_cast<int>(Globals::N)) {
                 if (matchingPiece(x + 1, y + 1, type, player)) {
                     result_x = x + 1;
@@ -166,12 +166,51 @@ private:
         return false;
     }
     
+    unique_ptr<Move> attemptToFlee() const
+    {
+        for (size_t y = 1; y <= static_cast<int>(Globals::N); ++y) {
+            for (size_t x = 1; x <= static_cast<int>(Globals::M); ++x) {
+                const ConcretePiecePosition &pos = my_board_view.getPiece(x, y);
+                
+                if (my_player_number == pos.getPlayer() &&
+                    ('R' ==  pos.effectivePieceType() || 
+                     'P' == pos.effectivePieceType()  || 
+                     'S' == pos.effectivePieceType())) {
+                     
+                    char my_type = pos.effectivePieceType();
+                    char stronger_piece = GameUtils::getStrongerPiece(my_type);
+                    
+                    int dummy_x, dummy_y;
+                    if (hasAdjacentPieceOfType(x, y, stronger_piece, other_player, dummy_x, dummy_y)) {
+                        /* First, we will attempt to flee to an empty square. */
+                        int to_x, to_y;
+                        if (hasAdjacentPieceOfType(x, y, '#', 0, to_x, to_y)) {
+                            return std::make_unique<ConcreteMove>(x, y, to_x, to_y);
+                        }
+                        
+                        /* Perhaps we can attempt suicide? */
+                        if (hasAdjacentPieceOfType(x, y, my_type, other_player, to_x, to_y)) {
+                            return std::make_unique<ConcreteMove>(x, y, to_x, to_y);
+                        }
+                        
+                        /* No? too bad.. lets continue to search. */
+                        continue;
+                    }
+                }
+            }
+        }
+        
+        /* Couldn't find a way to flee. */
+        return nullptr;
+    }
+    
     unique_ptr<Move> attemptToEatOpponentPiece() const
     {
         for (size_t y = 1; y <= static_cast<int>(Globals::N); ++y) {
             for (size_t x = 1; x <= static_cast<int>(Globals::M); ++x) {
                 const ConcretePiecePosition &pos = my_board_view.getPiece(x, y);
                 
+                /* We only attempt to eat in case we KNOW we are stronger. */
                 if (other_player == pos.getPlayer() &&
                     '#' != pos.effectivePieceType()) {
                     char opponent_type = pos.effectivePieceType();
@@ -179,8 +218,7 @@ private:
                     
                     char stronger_piece = GameUtils::getStrongerPiece(opponent_type);
                     
-                    int x_from;
-                    int y_from;
+                    int x_from, y_from;
                     if (hasAdjacentPieceOfType(x, y, stronger_piece, my_player_number, x_from, y_from)) {
                         return std::make_unique<ConcreteMove>(x_from, y_from, x, y);
                     }
@@ -315,6 +353,23 @@ public:
     virtual unique_ptr<Move> getMove() override
     {
         //TODO: Implement me.
+        unique_ptr<Move> result;
+        
+        result = attemptToEatOpponentPiece();
+        
+        if (nullptr != result) {
+            return result;
+        }
+        
+        result = attemptToFlee();
+        
+        if (nullptr != result) {
+            return result;
+        }
+        
+        /* OK, lets try to find the opponent's flag. */
+        
+        /* We should not get here. */
         return nullptr;
     }
     

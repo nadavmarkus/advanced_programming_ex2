@@ -318,6 +318,7 @@ private:
     void invokeMove(PlayerAlgorithm *player, int player_number)
     {
         unique_ptr<Move> move = player->getMove();
+        assert(nullptr != move);
         verifyMove(player_number, *move);
         
         unique_ptr<JokerChange> joker_change = player->getJokerChange();
