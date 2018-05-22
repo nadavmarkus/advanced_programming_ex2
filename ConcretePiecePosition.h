@@ -52,6 +52,8 @@ public:
                                                                                          other.getJokerRep()) {}
 
     ConcretePiecePosition() : player(0), point(), type('#'), joker_type('#') {}
+    
+    ConcretePiecePosition(const ConcretePiecePosition &other): ConcretePiecePosition(other.getPlayer(), other) {}
 
     const ConcretePiecePosition& operator=(ConcretePiecePosition &&other)
     {

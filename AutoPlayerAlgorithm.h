@@ -35,11 +35,10 @@ private:
     //TODO: Remove these from being instance members if I don't intend to move the joker.
     bool flag_up;
     bool flag_left;
-    std::random_device rd;
-    std::mt19937 gen;
-    std::uniform_int_distribution<> bool_generator;
-    std::uniform_int_distribution<> x_generator;
-    std::uniform_int_distribution<> y_generator;
+    std::default_random_engine gen;
+    std::uniform_int_distribution<int> bool_generator;
+    std::uniform_int_distribution<int> x_generator;
+    std::uniform_int_distribution<int> y_generator;
     std::set<ConcretePoint> possible_opponent_flag_locations;
     
     /*
@@ -302,8 +301,7 @@ public:
                             vector_to_fill(nullptr),
                             flag_up(false),
                             flag_left(false),
-                            rd(),
-                            gen(rd),
+                            gen(),
                             bool_generator(0, 1),
                             x_generator(1, Globals::M),
                             y_generator(1, Globals::N),

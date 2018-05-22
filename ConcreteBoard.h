@@ -4,6 +4,7 @@
 #include "Board.h"
 #include "Globals.h"
 #include "ConcretePiecePosition.h"
+#include "Move.h"
 #include <stdlib.h>
 #include <utility>
 #include <iostream>

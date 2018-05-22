@@ -4,6 +4,7 @@
 #include "ConcreteBoard.h"
 #include "PlayerAlgorithm.h"
 #include "FilePlayerAlgorithm.h"
+#include "AutoPlayerAlgorithm.h"
 #include "PiecePosition.h"
 #include "Globals.h"
 #include "GameUtils.h"
@@ -439,7 +440,7 @@ public:
     {
         Globals::initGlobals();
         //TODO: Instantiate according to command line.
-        FilePlayerAlgorithm player1_algorithm, player2_algorithm;
+        AutoPlayerAlgorithm player1_algorithm, player2_algorithm;
         player1 = &player1_algorithm;
         player2 = &player2_algorithm;
         
