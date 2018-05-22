@@ -55,6 +55,24 @@ namespace GameUtils
                 return false;
         }
     }
+    
+    char getStrongerPiece(char type)
+    {
+        switch(type) {
+            case 'R':
+                return 'P';
+                
+            case 'P':
+                return 'S';
+                
+            case 'S':
+                return 'R';
+                
+            default:
+                /* Should not happen. */
+                return '?';
+        }
+    }
 }
 
 #endif

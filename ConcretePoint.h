@@ -16,4 +16,23 @@ class ConcretePoint : public Point
         virtual int getY() const override { return y; }
 };
 
+bool operator <(const Point &a, const Point &b)
+{
+    /* Perform lexicographical comparison */
+    if (a.getX() < b.getX()) {
+        return true;
+    }
+    
+    if (a.getX() > b.getX()) {
+        return false;
+    }
+    
+    /* This means the X coordinates are equal. */
+    if (a.getY() < b.getY()) {
+        return true;
+    }
+    
+    return false;
+}
+
 #endif

@@ -46,6 +46,11 @@ public:
         return board[point.getY() - 1][point.getX() - 1];
     }
     
+    const ConcretePiecePosition& getPiece(int x, int y) const
+    {
+        return board[y - 1][x - 1];
+    }
+    
     void movePiece(const Point &from, const Point &to)
     {
         board[to.getY() - 1][to.getX() - 1] = std::move(board[from.getY() - 1][from.getX() - 1]);

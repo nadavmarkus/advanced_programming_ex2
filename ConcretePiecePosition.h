@@ -33,7 +33,7 @@ public:
     ConcretePiecePosition(int player,
                           const Point &point,
                           char type,
-                          char joker_type):
+                          char joker_type='#'):
                           ConcretePiecePosition(player, point.getX(), point.getY(), type, joker_type) {}
     
     ConcretePiecePosition(int player,
