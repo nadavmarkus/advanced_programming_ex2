@@ -70,8 +70,6 @@ private:
             }
             
             if (player_file.fail()) {
-                //TODO: Handle without exception and report to invoking game manager.
-                //error_message << "Failed to read player's input file." << std::endl;
                 vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(-1, -1, -1,  '#', '#'));
             }
             
@@ -85,8 +83,6 @@ private:
             line_formmater >> type >> x >> y;
             
             if (line_formmater.fail()) {
-                //TODO: Handle without exception and report to invoking game manager.
-                //error_message << "Player " << player << " bad format at line " << line_number;
                 vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(-1, -1, -1,  '#', '#'));
             }
             
@@ -97,8 +93,6 @@ private:
                 line_formmater >> masquerade_type;
                 
                 if (line_formmater.fail()) {
-                    //TODO: Handle without exception and report to invoking game manager.
-                    //error_message << "Player " << player << " bad joker command at line " << line_number;
                     vectorToFill.push_back(std::make_unique<ConcretePiecePosition>(-1, -1, -1,  '#', '#'));
                 }
             }
@@ -160,7 +154,6 @@ public:
         new_joker_type = '#';
         joker_parsing_failed = false;
         
-        // TODO: Handle error.
         if (player_move_file.fail()) {
             return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
@@ -171,7 +164,6 @@ public:
         formatted_line >> source_x >> source_y >> dest_x >> dest_y;
         
         if (formatted_line.fail()) {
-            //TODO: handle error
             return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
         
@@ -183,7 +175,6 @@ public:
     virtual unique_ptr<JokerChange> getJokerChange() override
     {
         if (joker_parsing_failed) {
-            //TODO: Handle error.
             return std::make_unique<ConcreteJokerChange>(-1, -1, '#');
         }
         

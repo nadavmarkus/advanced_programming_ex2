@@ -214,19 +214,20 @@ private:
     
     void verifyCoordinatesInRange(const Point &point) const
     {
-        //TODO: Construct useful messages here.
+        std::stringstream error;
         if (static_cast<unsigned int>(point.getX()) > Globals::M || 0 == point.getX()) {
-            throw BadMoveError(std::string("Invalid move"));
+            error << point.getX() << "," <<  point.getY() << " is out of range";
+            throw BadMoveError(error.str());
         }
         
         if (static_cast<unsigned int>(point.getY()) > Globals::N || 0 == point.getY()) {
-            throw BadMoveError(std::string("Invalid move"));
+            error << point.getX() << "," <<  point.getY() << " is out of range";
+            throw BadMoveError(error.str());
         }
     }
     
     void verifyMove(int player_number, const Move &move)
     {
-        //TODO: Construct useful messages here.
         const Point &from = move.getFrom();
         const Point &to = move.getTo();
         
@@ -237,14 +238,14 @@ private:
         
         /* Make sure the player attempted to move its own piece.. */
         if (from_owning_player != player_number) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Attempted to move non owned piece"));
         }
         
         int target_owning_player = board.getPlayer(to);
         
         /* You can't move pieces into spaces owned by yourself.. */
         if (target_owning_player == player_number) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Attempted to move into self owned piece"));
         }
         
         /* Make sure the player didn't attempt to move an unmovable piece. */
@@ -255,7 +256,7 @@ private:
         if ('J' == type) type = position.getJokerRep();
         
         if (!GameUtils::isMovablePiece(type)) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Attempted to move non movable piece type"));
         }
         
         /* Make sure that the diff in coordinates is only 1 in one axis */
@@ -263,11 +264,11 @@ private:
         int y_diff = abs(from.getY() - to.getY());
         
         if (x_diff > 1 || y_diff > 1) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Attempted to move beyond 1 coord diff"));
         }
         
         if (!((1 == x_diff) ^ (1 == y_diff))) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Attempted to change both coords at once"));
         }
         
         /* All good! */
@@ -275,19 +276,18 @@ private:
     
     void verifyJokerChange(int player_number, const JokerChange &joker_change)
     {
-        //TODO: Construct useful messages here.
         const Point& where = joker_change.getJokerChangePosition();
         verifyCoordinatesInRange(where);
         char new_joker_type = joker_change.getJokerNewRep();
         
         if (!GameUtils::isValidJokerMasqueradeType(new_joker_type)) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Invalid joker type"));
         }
         
         int owning_player = board.getPlayer(where);
         
         if (owning_player != player_number) {
-            throw BadMoveError(std::string("Invalid move"));
+            throw BadMoveError(std::string("Attempted joker move on non owned piece"));
         }
     }
     
@@ -498,7 +498,6 @@ public:
         int winner;
         
         if (player1_lost || player2_lost) {
-            //TODO: Handle case one of the guys lost
             if (player1_lost && player2_lost) {
                 winner = 0;
             } else if (player1_lost) {
