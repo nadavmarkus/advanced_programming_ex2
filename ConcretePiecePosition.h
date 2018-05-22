@@ -11,7 +11,7 @@ class ConcretePiecePosition : public PiecePosition
 {
 private:
     int player;
-    std::unique_ptr<ConcretePoint> point;
+    ConcretePoint point;
     char type, joker_type;
     
 public:
@@ -23,7 +23,7 @@ public:
         }
         
         player = other.getPlayer();
-        point = std::make_unique<ConcretePoint>(other.point->getX(), other.point->getY());
+        point = ConcretePoint(other.getPosition());
         type = other.getPiece();
         joker_type = other.getJokerRep();
         
@@ -31,11 +31,17 @@ public:
     }
     
     ConcretePiecePosition(int player,
+                          const Point &point,
+                          char type,
+                          char joker_type):
+                          ConcretePiecePosition(player, point.getX(), point.getY(), type, joker_type) {}
+    
+    ConcretePiecePosition(int player,
                           int x,
                           int y,
                           char type,
                           char joker_type='#') : player(player),
-                                             point(std::make_unique<ConcretePoint>(x, y)),
+                                             point(x, y),
                                              type(type),
                                              joker_type(joker_type) {}
                                              
@@ -45,7 +51,7 @@ public:
                                                                                          other.getPiece(),
                                                                                          other.getJokerRep()) {}
 
-    ConcretePiecePosition() : player(0), point(nullptr), type('#'), joker_type('#') {}
+    ConcretePiecePosition() : player(0), point(), type('#'), joker_type('#') {}
 
     const ConcretePiecePosition& operator=(ConcretePiecePosition &&other)
     {
@@ -56,7 +62,7 @@ public:
         type = other.getPiece();
         joker_type = other.getJokerRep();
         player = other.getPlayer();
-        point = std::make_unique<ConcretePoint>(other.getPosition().getX(), other.getPosition().getY());
+        point = ConcretePoint(other.getPosition());
         
         /* Invalid the other instance now. */
         other.reset();
@@ -64,22 +70,20 @@ public:
         return *this;
     }
     
-    void reset(bool destroy_point=true)
+    void reset()
     {
         type = '#';
         joker_type = '#';
         player = 0;
-        if (destroy_point) {
-            point = nullptr;
-        }
     }
     
-    virtual const Point& getPosition() const override { return *point; }
+    virtual const Point& getPosition() const override { return point; }
     virtual char getPiece() const override { return type; }
     virtual char getJokerRep() const override { return joker_type; }
     int getPlayer() const { return player; }
-    void setPoint(int x, int y) { point = std::make_unique<ConcretePoint>(x, y); }
+    void setPoint(int x, int y) { point = ConcretePoint(x, y); }
     void setJokerRep(char joker_type) { this->joker_type = joker_type; }
+    /* Used to calculate the winner of battles and the like. */
     char effectivePieceType() const
     {
         if ('J' == getPiece()) return getJokerRep();

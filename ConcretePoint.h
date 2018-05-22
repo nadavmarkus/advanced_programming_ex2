@@ -11,6 +11,7 @@ class ConcretePoint : public Point
     public:
         ConcretePoint() : x(0), y(0) {}
         ConcretePoint(int x, int y) : x(x), y(y) {}
+        ConcretePoint(const Point &other): x(other.getX()), y(other.getY()) {}
         virtual int getX() const override { return x; }
         virtual int getY() const override { return y; }
 };

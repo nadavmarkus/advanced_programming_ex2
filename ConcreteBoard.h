@@ -53,7 +53,7 @@ public:
     
     void invalidatePosition(const Point &where)
     {
-        board[where.getY() - 1][where.getX() - 1].reset(false);
+        board[where.getY() - 1][where.getX() - 1].reset();
     }
     
     void updateJokerPiece(const Point &where, char new_joker_type)

@@ -9,6 +9,7 @@
 #include "Globals.h"
 #include "ConcretePiecePosition.h"
 #include "PiecePosition.h"
+#include "ConcretePoint.h"
 
 #include <memory>
 #include <vector>
@@ -130,6 +131,31 @@ public:
         vector_to_fill = nullptr;
     }
 
+    virtual void notifyOnInitialBoard(const Board& b, const std::vector<unique_ptr<FightInfo>>& fights)
+    {
+        for (size_t y = 1; y <= Globals::N; ++y) {
+            for (size_t x = 1; x <= Globals::M; ++x) {
+                const ConcretePoint point(x, y);
+                int player = b.getPlayer(point);
+                
+                if (0 == player) {
+                    my_board_view.invalidatePosition(point);
+                    
+                } else if (player == my_player_number) {
+                    /* Nothing to do in this case actually.. */
+                
+                } else if (player == other_player) {
+                    /* We don't know yet the type of the opponent's piece. */
+                    const ConcretePiecePosition pos(player, point, '#', '#');
+                    my_board_view.addPosition(pos);
+                    
+                } else {
+                    /* Should not happen. */
+                    assert(false);
+                }
+            }
+        }
+    }
 };
 
 #endif
