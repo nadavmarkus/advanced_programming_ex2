@@ -147,6 +147,7 @@ private:
         
         /* Should not happen. */
         assert(false);
+        return -1;
     }
     
     /*

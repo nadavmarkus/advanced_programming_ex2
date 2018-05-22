@@ -31,6 +31,7 @@ public:
         if (2 == player) return player2_piece;
         /* Should not happen. */
         assert(false);
+        return '#';
     }
     
     virtual int getWinner() const override { return winner; }

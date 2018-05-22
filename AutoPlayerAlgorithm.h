@@ -280,6 +280,7 @@ private:
         } else {
             /* Should not happen. */
             assert(false);
+            return nullptr;
         }
     }
     
