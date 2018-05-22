@@ -1,3 +1,10 @@
+/*
+ * Author: Nadav Markus
+ * This file contains some useful utilities to let us know which types are movables,
+ * which types can be set to the joker masquerade, etc.
+ */
+
+
 #ifndef __GAME_UTILS_H_
 #define __GAME_UTILS_H_
 

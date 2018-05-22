@@ -1,3 +1,11 @@
+/*
+ * Author: Nadav Markus
+ * This file contains the main implementation of the file auto algorithm.
+ * The algorithm is simple - it attempts to eat opponent pieces if it knows for sure
+ * that it can, afterwards it attempts to run out of danger if possible, and finally
+ * it attempts to search the enmie's flag.
+ */
+
 #ifndef __AUTO_PLAYER_ALGORITHM_H_
 #define __AUTO_PLAYER_ALGORITHM_H_
 
@@ -182,6 +190,10 @@ private:
         return false;
     }
     
+    /* 
+     * This method checks whether we have any piece in danger, and if so, attempts
+     * to find an escape path.
+     */
     unique_ptr<Move> attemptToFlee() const
     {
         for (size_t y = 1; y <= static_cast<int>(Globals::N); ++y) {
@@ -220,6 +232,7 @@ private:
         return nullptr;
     }
     
+    /* This method checks whether we know we have a stronger piece than the opponent, and if so, attempt to eat it. */
     unique_ptr<Move> attemptToEatOpponentPiece() const
     {
         for (size_t y = 1; y <= static_cast<int>(Globals::N); ++y) {
@@ -245,7 +258,7 @@ private:
         return nullptr;
     }
     
-    /* In case of search and destroy, this function finds at least one viable path for a piece to pursue an unknown location. */
+    /* In case of search and destroy, this function finds at least one viable path for a piece to pursue the flag. */
     unique_ptr<Move> findViablemove(const ConcretePoint &to_destroy, const ConcretePoint &chosen_piece_location) const
     {
         /* OK - let's construct the move. */
@@ -284,19 +297,20 @@ private:
         }
     }
     
+    /* This method attempts to seek out and eat the enemy's flag. */
     unique_ptr<Move> searchAndDestroy() const
     {
         piece_set_iterator it = possible_opponent_flag_locations.begin();
         
         assert(possible_opponent_flag_locations.size() > 0);
         assert(it != possible_opponent_flag_locations.end());
-        /* Let's try a movable piece with the closet coordinates. */
         
         size_t best_distance = SIZE_MAX;
         
         const ConcretePoint &to_destroy = *it;
         ConcretePoint chosen_piece_location;
         
+        /* Let's try a movable piece with the closet coordinates. */
         for (size_t y = 1; y <= static_cast<int>(Globals::N); ++y) {
             for (size_t x = 1; x <= static_cast<int>(Globals::M); ++x) {
                 const ConcretePiecePosition &pos = my_board_view.getPiece(x, y);
@@ -319,7 +333,8 @@ private:
                 if ((cur_distance < best_distance) &&
                     (hasAdjacentPieceOfType(x, y, '?', 0, dummy_x, dummy_y) ||
                      hasAdjacentPieceOfType(x, y, '?', other_player, dummy_x, dummy_y))) {
-                     best_distance = cur_distance;
+                    
+                    best_distance = cur_distance;
                     chosen_piece_location = pos.getPosition();
                 }
             }
@@ -335,6 +350,7 @@ private:
         return findViablemove(to_destroy, chosen_piece_location);
     }
     
+    /* This method updates our view of the world. */
     void flushPreviousMovesData()
     {
         if (nullptr == last_move) {
@@ -443,7 +459,7 @@ public:
                             last_fight_result(nullptr)
     {
         /* Initialize RNG. */
-        /* Just to make sure that different players get different random seeds. */
+        /* Just to make sure that different players get different random seeds, we sleep for 2 milliseconds. */
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         gen.seed(std::chrono::system_clock::now().time_since_epoch().count());
     }

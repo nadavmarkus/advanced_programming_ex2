@@ -1,3 +1,10 @@
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of a move.
+ *  Contains utilities to initialize it from other moves.
+ */
+
+
 #ifndef __CONCRETE_MOVE_H_
 #define __CONCRETE_MOVE_H_
 

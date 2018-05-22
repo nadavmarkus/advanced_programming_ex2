@@ -1,3 +1,12 @@
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of a fileplayeralgorithm.
+ * Contains our old implementation, as in ex1, of reading a file for moves and positions.
+ * Note that we can't throw erros, and therefore we return invalid moves/positions if we need
+ * to report an error.
+ */
+
+
 #ifndef __FILE_PLAYER_ALGORITHM_H_
 #define __FILE_PLAYER_ALGORITHM_H_
 
@@ -106,13 +115,15 @@ public:
     {
         this->player = player;
         std::stringstream file_path;
+        std::stringstream error;
         std::ifstream player_board_file;
         
         file_path << "./player" << player << ".rps_board";
         player_board_file.open(file_path.str());
         
         if (player_board_file.fail()) {
-            throw BadFilePathError(file_path.str());
+            error << "File " << file_path.str() << " does not exist";
+            throw BadFilePathError(error.str());
         }
         
         file_path.str("");
@@ -120,7 +131,8 @@ public:
         player_move_file.open(file_path.str());
         
         if (player_move_file.fail()) {
-            throw BadFilePathError(file_path.str());
+            error << "File " << file_path.str() << " does not exist";
+            throw BadFilePathError(error.str());
         }
         
         /* Let RAII take care of the file descriptor for us in case of exceptions. */

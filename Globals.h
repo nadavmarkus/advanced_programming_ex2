@@ -1,3 +1,10 @@
+/*
+ * Author: Nadav Markus
+ * This is file contains the global configuration for the game.
+ * Note: the function initGlobals must be invoked for the ALLOWED_PIECES_COUNT map to be valid.
+ */
+
+
 #ifndef __GLOBALS_H_
 #define __GLOBALS_H_
 

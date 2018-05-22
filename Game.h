@@ -1,3 +1,10 @@
+/*
+ * Author: Nadav Markus
+ * This is the core engine of the game. It was ported from the previous exercise, to work
+ * with the new supplied interfaces. It generates its output to both a file and stdout.
+ */
+
+
 #ifndef __GAME_H_
 #define __GAME_H_
 
@@ -60,6 +67,7 @@ private:
         }
     }
     
+    /* Note: This method throws in order to let us know that something is wrong. */
     void verifyPlayerPosition(int player,
                               const std::vector<std::unique_ptr<PiecePosition>> &positions) const
     {
@@ -212,6 +220,7 @@ private:
         player2->notifyOnInitialBoard(board, fights);
     }
     
+    /* Note: This method throws in order to let us know that something is wrong. */
     void verifyCoordinatesInRange(const Point &point) const
     {
         std::stringstream error;
@@ -226,6 +235,7 @@ private:
         }
     }
     
+    /* Note: This method throws in order to let us know that something is wrong. */
     void verifyMove(int player_number, const Move &move)
     {
         const Point &from = move.getFrom();
@@ -274,6 +284,7 @@ private:
         /* All good! */
     }
     
+    /* Note: This method throws in order to let us know that something is wrong. */
     void verifyJokerChange(int player_number, const JokerChange &joker_change)
     {
         const Point& where = joker_change.getJokerChangePosition();
@@ -315,6 +326,7 @@ private:
         }
     }
     
+    /* This method invokes the next move of a player, with all the requried verifications. */
     void invokeMove(PlayerAlgorithm *player, int player_number)
     {
         unique_ptr<Move> move = player->getMove();
@@ -450,6 +462,7 @@ private:
     }
 
 public:
+    /* The main interface of this class. Simply runs the game until completion. */
     void run(bool player1_file, bool player2_file)
     {
         Globals::initGlobals();

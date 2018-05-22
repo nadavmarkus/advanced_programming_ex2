@@ -1,3 +1,11 @@
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of pieceposition. Contains utilities to initialize
+ * it from other instances and to assign to it. Can also normalize and get the effective
+ * piece type at a location.
+ */
+
+
 #ifndef __CONCRETE_PIECE_POSITION_H_
 #define __CONCRETE_PIECE_POSITION_H_
 

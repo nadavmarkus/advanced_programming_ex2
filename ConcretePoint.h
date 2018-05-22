@@ -1,3 +1,10 @@
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of a point. Contains utilities to initialize it from other
+ * instances, and to compare it in order to insert it to a set.
+ */
+
+
 #ifndef __CONCRETE_POINT_H_
 #define __CONCRETE_POINT_H_
 

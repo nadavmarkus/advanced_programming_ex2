@@ -1,6 +1,12 @@
 #ifndef __CONCRETE_FIGHT_INFO_H_
 #define __CONCRETE_FIGHT_INFO_H_
 
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of fightinfo. contains utilities to print it and to set
+ */
+
+
 #include "Point.h"
 #include "ConcretePoint.h"
 

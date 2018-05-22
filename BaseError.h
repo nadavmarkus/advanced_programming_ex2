@@ -1,3 +1,8 @@
+/*
+ * Author: Nadav Markus
+ * The base class for my thrown errors.
+ */
+
 #ifndef __BASE_ERROR_H
 #define __BASE_ERROR_H
 

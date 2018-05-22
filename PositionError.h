@@ -1,3 +1,9 @@
+/*
+ * Author: Nadav Markus
+ * An error that gets thrown for an invalid position in the initial phase.
+ */
+
+
 #ifndef __POSITION_ERROR_
 #define __POSITION_ERROR_
 

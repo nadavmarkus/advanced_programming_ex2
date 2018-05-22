@@ -1,3 +1,9 @@
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of joker change.
+ */
+
+
 #ifndef __CONCRETE_JOKER_CHANGE_H_
 #define __CONCRETE_JOKER_CHANGE_H_
 

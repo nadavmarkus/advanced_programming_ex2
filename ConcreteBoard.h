@@ -1,3 +1,9 @@
+/*
+ * Author: Nadav Markus
+ * A concrete implementation of a board. contains utilities to print it and to set
+ * piece positions inside it.
+ */
+
 #ifndef __CONCRETE_BOARD_H_
 #define __CONCRETE_BOARD_H_
 
