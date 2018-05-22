@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <sstream>
+#include <fstream>
 
 class Game
 {
@@ -454,6 +455,14 @@ public:
         AutoPlayerAlgorithm player1_auto_algorithm, player2_auto_algorithm;
         FilePlayerAlgorithm player1_file_algorithm, player2_file_algorithm;
         
+        std::ofstream output_file;
+        output_file.open("./rps.output", std::ofstream::out | std::ofstream::trunc);
+        
+        if (output_file.fail()) {
+            std::cout << "Failed to open output file, aborting." << std::endl;
+            return;
+        }
+        
         if (player1_file) {
             player1 = &player1_file_algorithm;
         } else {
@@ -510,6 +519,7 @@ public:
         
         game_over_message << "Winner is " << winner << std::endl;
         std::cout << game_over_message.str();
+        output_file << game_over_message.str();
     }
 };
 
