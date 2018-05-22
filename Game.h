@@ -391,7 +391,7 @@ private:
     {
         doInitialMoves();
         
-        for(size_t move_count = 0; move_count < 50; ++move_count) {
+        for(size_t move_count = 0; move_count < Globals::MOVES_UNTIL_TIE; ++move_count) {
             /* Do we have a winner yet? */
             //TODO: add appropriate messages for winning
             if (0 == player1_flags || 0 == player2_flags) {

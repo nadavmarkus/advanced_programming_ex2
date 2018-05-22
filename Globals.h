@@ -7,6 +7,7 @@ namespace Globals
 {
     constexpr size_t M = 10;
     constexpr size_t N = 10;
+    constexpr size_t MOVES_UNTIL_TIE = 50;
 
     std::map<char, unsigned int> ALLOWED_PIECES_COUNT;
 

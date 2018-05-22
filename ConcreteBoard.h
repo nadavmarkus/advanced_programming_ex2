@@ -30,6 +30,12 @@ public:
         return board[pos.getY() - 1][pos.getX() - 1].getPlayer();
     }
     
+    /* We don't to overload a virtual function.. */
+    int getPlayerAt(int x, int y) const
+    {
+        return board[y - 1][x - 1].getPlayer();
+    }
+    
     void addPosition(const ConcretePiecePosition &position)
     {
         board[position.getPosition().getY() - 1][position.getPosition().getX() - 1] = position;
