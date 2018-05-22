@@ -6,6 +6,7 @@
 #include "ConcretePiecePosition.h"
 #include "Move.h"
 #include <stdlib.h>
+#include "assert.h"
 #include <utility>
 #include <iostream>
 #include <cctype>
@@ -21,7 +22,7 @@ public:
     {
         for (size_t i = 0; i < Globals::N; ++i) {
             for (size_t j = 0; j < Globals::M; ++j) {
-                board[i][j].setPoint(j, i);
+                board[i][j].setPoint(j + 1, i + 1);
             }
         }
     }
@@ -37,6 +38,7 @@ public:
         return board[y - 1][x - 1].getPlayer();
     }
     
+    /* Make sure that points stay consistent. */
     void addPosition(const ConcretePiecePosition &position)
     {
         board[position.getPosition().getY() - 1][position.getPosition().getX() - 1] = position;
@@ -55,6 +57,10 @@ public:
     void movePiece(const Point &from, const Point &to)
     {
         board[to.getY() - 1][to.getX() - 1] = std::move(board[from.getY() - 1][from.getX() - 1]);
+        //board.setPoint(
+        board[to.getY() - 1][to.getX() - 1].setPoint(to.getX(), to.getY());
+        assert(board[to.getY() - 1][to.getX() - 1].getPosition().getX() == to.getX());
+        assert(board[to.getY() - 1][to.getX() - 1].getPosition().getY() == to.getY());
     }
     
     void movePiece(const Move &move)
@@ -83,7 +89,7 @@ public:
                 if (board[i][j].getPlayer() == 2) {
                     c = tolower(c);
                 }
-                std::cout << c << " ";
+                std::cout << board[i][j].getPlayer() << c << " ";
             }
             std::cout << std::endl;
         }

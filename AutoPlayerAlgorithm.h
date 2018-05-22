@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 using piece_set_iterator = std::set<ConcretePoint>::iterator;
 
@@ -126,12 +127,21 @@ private:
         }
     }
     
+    /* If the piece type is '?', it is considered to be a wild card. */
     bool matchingPiece(int x, int y, char type, int player) const
     {
         const ConcretePiecePosition &pos = my_board_view.getPiece(x, y);
-        return (type == pos.effectivePieceType() && player == pos.getPlayer());
+        if (type != '?') {
+            return (type == pos.effectivePieceType() && player == pos.getPlayer());
+        }
+        
+        return player == pos.getPlayer();
     }
     
+    /* 
+     * This function can accept '?' as the type, and than every possible piece type will be matched.
+     * Note that there is no wild card for the player.
+     */
     bool hasAdjacentPieceOfType(int x,
                                 int y,
                                 char type,
@@ -237,6 +247,44 @@ private:
         return nullptr;
     }
     
+    /* In case of search and destroy, this function finds at least one viable path for a piece to pursue an unknown location. */
+    unique_ptr<Move> findViablemove(const ConcretePoint &to_destroy, const ConcretePoint &chosen_piece_location) const
+    {
+        /* OK - let's construct the move. */
+        if (to_destroy.getX() > chosen_piece_location.getX() &&
+            my_player_number != my_board_view.getPlayerAt(chosen_piece_location.getX() + 1, 
+                                                          chosen_piece_location.getY())) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX() + 1,
+                                                  chosen_piece_location.getY());
+                                                  
+        } else if (to_destroy.getX() < chosen_piece_location.getX() &&
+                   my_player_number != my_board_view.getPlayerAt(chosen_piece_location.getX() - 1, 
+                                                                 chosen_piece_location.getY())) {
+            
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX() - 1,
+                                                  chosen_piece_location.getY());
+                                                  
+        } else if (to_destroy.getY() > chosen_piece_location.getY() && 
+                   my_player_number != my_board_view.getPlayerAt(chosen_piece_location.getX(),
+                                                                 chosen_piece_location.getY() + 1)) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX(),
+                                                  chosen_piece_location.getY() + 1);
+                                                  
+        } else if (to_destroy.getY() < chosen_piece_location.getY() && 
+                   my_player_number != my_board_view.getPlayerAt(chosen_piece_location.getX(), 
+                                                                 chosen_piece_location.getY() - 1)) {
+            return std::make_unique<ConcreteMove>(chosen_piece_location,
+                                                  chosen_piece_location.getX(),
+                                                  chosen_piece_location.getY() - 1);
+        } else {
+            /* Should not happen. */
+            assert(false);
+        }
+    }
+    
     unique_ptr<Move> searchAndDestroy() const
     {
         piece_set_iterator it = possible_opponent_flag_locations.begin();
@@ -264,9 +312,15 @@ private:
                 
                 /* All right, we got a new candidate. */
                 size_t cur_distance = to_destroy.getDistance(pos.getPosition());
+                int dummy_x, dummy_y;
                 
-                if (cur_distance < best_distance) {
-                    best_distance = cur_distance;
+                /* This check makes sure we can find a viable path for the current piece - if it is surrounded by our pieces
+                 * for example we can't move, so we need to skip it.
+                 */
+                if ((cur_distance < best_distance) &&
+                    (hasAdjacentPieceOfType(x, y, '?', 0, dummy_x, dummy_y) ||
+                     hasAdjacentPieceOfType(x, y, '?', other_player, dummy_x, dummy_y))) {
+                     best_distance = cur_distance;
                     chosen_piece_location = pos.getPosition();
                 }
             }
@@ -279,35 +333,15 @@ private:
         
         assert(best_distance > 0);
         
-        /* OK - let's construct the move. */
-        if (to_destroy.getX() > chosen_piece_location.getX()) {
-            return std::make_unique<ConcreteMove>(chosen_piece_location,
-                                                  chosen_piece_location.getX() + 1,
-                                                  chosen_piece_location.getY());
-        } else if (to_destroy.getX() < chosen_piece_location.getX()) {
-            return std::make_unique<ConcreteMove>(chosen_piece_location,
-                                                  chosen_piece_location.getX() - 1,
-                                                  chosen_piece_location.getY());
-        } else if (to_destroy.getY() > chosen_piece_location.getY()) {
-            return std::make_unique<ConcreteMove>(chosen_piece_location,
-                                                  chosen_piece_location.getX(),
-                                                  chosen_piece_location.getY() + 1);
-        } else if (to_destroy.getY() < chosen_piece_location.getY()) {
-            return std::make_unique<ConcreteMove>(chosen_piece_location,
-                                                  chosen_piece_location.getX(),
-                                                  chosen_piece_location.getY() - 1);
-        } else {
-            /* Should not happen. */
-            assert(false);
-        }
+        return findViablemove(to_destroy, chosen_piece_location);
     }
     
     void flushPreviousMovesData()
     {
-        std::cout << "flushing for player " << my_player_number << std::endl;
+        //std::cout << "flushing for player " << my_player_number << std::endl;
         if (nullptr == last_move) {
             /* This can happen if we are player1 and this is the first turn. Nothing to do. */
-            std::cout << "Nothing to flush for player " << my_player_number << std::endl;
+            //std::cout << "Nothing to flush for player " << my_player_number << std::endl;
             return;
         }
      
@@ -316,7 +350,7 @@ private:
          * This means that last_move is our move.
          */
         if (my_move) {
-            std::cout << "Flushing own move for player " << my_player_number << std::endl;
+            //std::cout << "Flushing own move for player " << my_player_number << std::endl;
             /* Did a fight occur? */
             if (nullptr == last_fight_result) {
                 /* No? this means our move was for sure successfully executed. */
@@ -324,12 +358,21 @@ private:
                 return;
             }
             
+            /* 
+             * No matter the result, a flag cannot be at the location where the fight took place.
+             * The only possible situation is when we attacked a flag - but in that case, we already won,
+             * so we can remove anyway this possible location for a flag.
+             */
+            if (possible_opponent_flag_locations.count(last_fight_result->getPosition())) {
+                possible_opponent_flag_locations.erase(last_fight_result->getPosition());
+            }
+            
             /* OK - a fight occurred. We were the attacker, did we win? */
             if (last_fight_result->getWinner() == my_player_number) {
                 /* We can carry on with just moving the piece. */
                 my_board_view.movePiece(*last_move);
+                
             /* It was a tie? */
-            
             } else if (0 == last_fight_result->getWinner()) {
                 my_board_view.invalidatePosition(last_fight_result->getPosition());
                 my_board_view.invalidatePosition(last_move->getFrom());
@@ -351,7 +394,13 @@ private:
          * This means that last_move is the opponent's move.
          */
         } else {
-            std::cout << "Flushing other move for player " << my_player_number << std::endl;
+            //std::cout << "Flushing other move for player " << my_player_number << std::endl;
+            
+            /* A flag can't move, so we can remove the from point. */
+            if (possible_opponent_flag_locations.count(last_move->getFrom())) {
+                possible_opponent_flag_locations.erase(last_move->getFrom());
+            }
+            
             /* No fight? we can just update. */
             if (nullptr == last_fight_result) {
                 my_board_view.movePiece(*last_move);
@@ -399,6 +448,8 @@ public:
                             last_fight_result(nullptr)
     {
         /* Initialize RNG. */
+        /* Just to make sure that different players get different random seeds. */
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
         gen.seed(std::chrono::system_clock::now().time_since_epoch().count());
     }
 
@@ -420,6 +471,8 @@ public:
         
         x = flag_left ? 1 : Globals::M;
         y = flag_up ? 1 : Globals::N;
+        
+        std::cout << "Initial player " << my_player_number << " flag coordinates are " << x << "," << y << std::endl;
         
         fillVectorAndUpdateBoard(x, y, 'F');
         
@@ -483,6 +536,7 @@ public:
     
     virtual void notifyFightResult(const FightInfo &fightInfo) override
     {
+        std::cout << "Notifying player " << my_player_number << " on fight result." << std::endl;
         last_fight_result = std::make_unique<ConcreteFightInfo>(fightInfo.getWinner(),
                                                                 fightInfo.getPiece(1),
                                                                 fightInfo.getPiece(2),
@@ -502,10 +556,14 @@ public:
         my_move = true;
         unique_ptr<Move> result;
         
+        std::cout << "Player " << my_player_number << " board view:" << std::endl;
+        my_board_view.printBoard();
+        std::cout << std::endl << std::endl << std::endl;
+        
         result = attemptToEatOpponentPiece();
         
         if (nullptr != result) {
-            last_move = std::make_unique<ConcreteMove>(*result);
+            last_move = std::move(std::make_unique<ConcreteMove>(*result));
             
             std::cout << "Player " << my_player_number << ": "  << "eat move" << std::endl;
             std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
@@ -517,7 +575,7 @@ public:
         result = attemptToFlee();
         
         if (nullptr != result) {
-            last_move = std::make_unique<ConcreteMove>(*result);
+            last_move = std::move(std::make_unique<ConcreteMove>(*result));
             
             std::cout << "Player " << my_player_number << ":" << "flee move" << std::endl;
             std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
@@ -527,17 +585,18 @@ public:
         }
         
         /* OK, lets try to find the opponent's flag. */
-        result =  searchAndDestroy();
+        result = searchAndDestroy();
         
         /* 
          * This means we are out of movable pieces. Unfortunately, we can't even move the jokers
          * since they are bombs (joker changes take effect for next move), so we have to report an invalid move..
          */
         if (nullptr == result) {
+            std::cout << "Player " << my_player_number << " has failed." << std::endl;
             return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
         
-        last_move = std::make_unique<ConcreteMove>(*result);
+        last_move = std::move(std::make_unique<ConcreteMove>(*result));
         
         std::cout << "Player " << my_player_number << ":" << "search move"  << std::endl;
         std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();

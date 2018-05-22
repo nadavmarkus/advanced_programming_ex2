@@ -207,7 +207,9 @@ private:
             board.addPosition(point_to_piece.second);
         }
         
+        std::cout << "True board is:" << std::endl;
         board.printBoard();
+        std::cout << std::endl << std::endl << std::endl;
         
         player1->notifyOnInitialBoard(board, fights);
         player2->notifyOnInitialBoard(board, fights);
@@ -376,6 +378,7 @@ private:
             player2->notifyFightResult(info);
             
         } else {
+            /* Regular old move, can just apply. */
             board.movePiece(from, to);
         }
         
@@ -411,7 +414,9 @@ private:
                 return 2;
             }
             
+            std::cout << "True board is (after player 1 move):" << std::endl;
             board.printBoard();
+            std::cout << std::endl << std::endl << std::endl;
             
             if (0 == player1_flags || 0 == player2_flags) {
                 //TODO: add appropriate messages for winning
@@ -428,7 +433,9 @@ private:
                 return 1;
             }
             
+            std::cout << "True board is (after player 2 move):" << std::endl;
             board.printBoard();
+            std::cout << std::endl << std::endl << std::endl;
         }
         
         /* We got to a tie. */

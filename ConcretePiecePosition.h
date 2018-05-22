@@ -23,6 +23,7 @@ public:
         }
         
         player = other.getPlayer();
+        /* Note: The point stays the same. */
         point = ConcretePoint(other.getPosition());
         type = other.getPiece();
         joker_type = other.getJokerRep();
@@ -64,6 +65,7 @@ public:
         type = other.getPiece();
         joker_type = other.getJokerRep();
         player = other.getPlayer();
+        /* Note: The point stay the same. */
         point = ConcretePoint(other.getPosition());
         
         /* Invalid the other instance now. */
