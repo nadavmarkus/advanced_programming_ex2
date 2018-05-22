@@ -108,9 +108,6 @@ private:
     }
 
 public:
-    /* TODO: Complete the constructor. */
-    FilePlayerAlgorithm() : player(0), player_move_file() {}
-
     virtual void getInitialPositions(int player, std::vector<unique_ptr<PiecePosition>>& vectorToFill) override
     {
         this->player = player;

@@ -443,14 +443,24 @@ private:
     }
 
 public:
-    //TODO: Complete constructor
-    void run()
+    void run(bool player1_file, bool player2_file)
     {
         Globals::initGlobals();
         //TODO: Instantiate according to command line.
-        AutoPlayerAlgorithm player1_algorithm, player2_algorithm;
-        player1 = &player1_algorithm;
-        player2 = &player2_algorithm;
+        AutoPlayerAlgorithm player1_auto_algorithm, player2_auto_algorithm;
+        FilePlayerAlgorithm player1_file_algorithm, player2_file_algorithm;
+        
+        if (player1_file) {
+            player1 = &player1_file_algorithm;
+        } else {
+            player1 = &player1_auto_algorithm;
+        }
+        
+        if (player2_file) {
+            player2 = &player2_file_algorithm;
+        } else {
+            player2 = &player2_auto_algorithm;
+        }
         
         player1->getInitialPositions(1, player1_positions);
         player2->getInitialPositions(2, player2_positions);
@@ -485,15 +495,14 @@ public:
                 winner = 1;
             }
             
-            goto out;
+        } else {
+        
+            player1_flags = Globals::ALLOWED_PIECES_COUNT['F'];
+            player2_flags = Globals::ALLOWED_PIECES_COUNT['F'];
+            
+            winner = doMoves();
         }
         
-        player1_flags = Globals::ALLOWED_PIECES_COUNT['F'];
-        player2_flags = Globals::ALLOWED_PIECES_COUNT['F'];
-        
-        winner = doMoves();
-        
-    out:
         std::cout << "Winner is " << winner << std::endl;
     }
 };

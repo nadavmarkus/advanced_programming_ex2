@@ -23,7 +23,6 @@
 #include <random>
 #include <assert.h>
 #include <stdlib.h>
-#include <iostream>
 #include <chrono>
 #include <thread>
 
@@ -71,7 +70,6 @@ private:
             }
             
             /* All right, we are good to go. */
-            std::cout << "Player " << my_player_number << " placing piece at " << x << "," << y << std::endl;
             fillVectorAndUpdateBoard(x, y, type);
             break;
         }
@@ -338,10 +336,8 @@ private:
     
     void flushPreviousMovesData()
     {
-        //std::cout << "flushing for player " << my_player_number << std::endl;
         if (nullptr == last_move) {
             /* This can happen if we are player1 and this is the first turn. Nothing to do. */
-            //std::cout << "Nothing to flush for player " << my_player_number << std::endl;
             return;
         }
      
@@ -350,7 +346,6 @@ private:
          * This means that last_move is our move.
          */
         if (my_move) {
-            //std::cout << "Flushing own move for player " << my_player_number << std::endl;
             /* Did a fight occur? */
             if (nullptr == last_fight_result) {
                 /* No? this means our move was for sure successfully executed. */
@@ -394,7 +389,6 @@ private:
          * This means that last_move is the opponent's move.
          */
         } else {
-            //std::cout << "Flushing other move for player " << my_player_number << std::endl;
             
             /* A flag can't move, so we can remove the from point. */
             if (possible_opponent_flag_locations.count(last_move->getFrom())) {
@@ -472,8 +466,6 @@ public:
         x = flag_left ? 1 : Globals::M;
         y = flag_up ? 1 : Globals::N;
         
-        std::cout << "Initial player " << my_player_number << " flag coordinates are " << x << "," << y << std::endl;
-        
         fillVectorAndUpdateBoard(x, y, 'F');
         
         /* Surround it with our two available bombs. */
@@ -530,13 +522,11 @@ public:
     {
         flushPreviousMovesData();
         my_move = false;
-        std::cout << "Setting last move as opponent for " << my_player_number << std::endl;
         last_move = std::make_unique<ConcreteMove>(move);
     }
     
     virtual void notifyFightResult(const FightInfo &fightInfo) override
     {
-        std::cout << "Notifying player " << my_player_number << " on fight result." << std::endl;
         last_fight_result = std::make_unique<ConcreteFightInfo>(fightInfo.getWinner(),
                                                                 fightInfo.getPiece(1),
                                                                 fightInfo.getPiece(2),
@@ -556,19 +546,10 @@ public:
         my_move = true;
         unique_ptr<Move> result;
         
-        std::cout << "Player " << my_player_number << " board view:" << std::endl;
-        my_board_view.printBoard();
-        std::cout << std::endl << std::endl << std::endl;
-        
         result = attemptToEatOpponentPiece();
         
         if (nullptr != result) {
             last_move = std::move(std::make_unique<ConcreteMove>(*result));
-            
-            std::cout << "Player " << my_player_number << ": "  << "eat move" << std::endl;
-            std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
-            std::cout << " to " << result->getTo().getX() << "," << result->getTo().getY() << std::endl;
-            
             return result;
         }
         
@@ -576,11 +557,6 @@ public:
         
         if (nullptr != result) {
             last_move = std::move(std::make_unique<ConcreteMove>(*result));
-            
-            std::cout << "Player " << my_player_number << ":" << "flee move" << std::endl;
-            std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
-            std::cout << " to " << result->getTo().getX() << "," << result->getTo().getY() << std::endl;
-            
             return result;
         }
         
@@ -592,15 +568,10 @@ public:
          * since they are bombs (joker changes take effect for next move), so we have to report an invalid move..
          */
         if (nullptr == result) {
-            std::cout << "Player " << my_player_number << " has failed." << std::endl;
             return std::make_unique<ConcreteMove>(-1, -1, -1, -1);
         }
         
         last_move = std::move(std::make_unique<ConcreteMove>(*result));
-        
-        std::cout << "Player " << my_player_number << ":" << "search move"  << std::endl;
-        std::cout << "Moving from " << result->getFrom().getX() << "," << result->getFrom().getY();
-        std::cout << " to " << result->getTo().getX() << "," << result->getTo().getY() << std::endl;
         
         assert(nullptr != result);
         return result;

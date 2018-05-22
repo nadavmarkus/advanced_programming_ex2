@@ -6,7 +6,6 @@
 #include "ConcretePiecePosition.h"
 #include "Move.h"
 #include <stdlib.h>
-#include "assert.h"
 #include <utility>
 #include <iostream>
 #include <cctype>
@@ -57,10 +56,7 @@ public:
     void movePiece(const Point &from, const Point &to)
     {
         board[to.getY() - 1][to.getX() - 1] = std::move(board[from.getY() - 1][from.getX() - 1]);
-        //board.setPoint(
         board[to.getY() - 1][to.getX() - 1].setPoint(to.getX(), to.getY());
-        assert(board[to.getY() - 1][to.getX() - 1].getPosition().getX() == to.getX());
-        assert(board[to.getY() - 1][to.getX() - 1].getPosition().getY() == to.getY());
     }
     
     void movePiece(const Move &move)
