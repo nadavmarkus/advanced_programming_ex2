@@ -7,7 +7,8 @@
 #include "Move.h"
 #include <stdlib.h>
 #include <utility>
-#include <iostream>
+#include <sstream>
+#include <string>
 #include <cctype>
 
 
@@ -74,23 +75,22 @@ public:
         board[where.getY() - 1][where.getX() - 1].setJokerRep(new_joker_type);
     }
     
-    void printBoard() const
+    std::string printBoard() const
     {
+        std::stringstream result;
         for (size_t i = 0; i < Globals::N; ++i) {
             for (size_t j = 0; j < Globals::M; ++j) {
                 char c = board[i][j].getPiece();
-                // if ('J' == c) {
-                    // c = board[i][j].getJokerRep();
-                // }
                 if (board[i][j].getPlayer() == 2) {
                     c = tolower(c);
                 }
-                std::cout << board[i][j].getPlayer() << c << " ";
+                result << c;
             }
-            std::cout << std::endl;
+            result << std::endl;
         }
         
-        std::cout << "-------------------------" << std::endl;
+        result << "-------------------------" << std::endl;
+        return result.str();
     }
 };
 

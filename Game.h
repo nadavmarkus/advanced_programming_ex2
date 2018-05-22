@@ -29,8 +29,6 @@
 class Game
 {
 private:
-    std::string player1_loss_reason;
-    std::string player2_loss_reason;
     std::vector<std::unique_ptr<PiecePosition>> player1_positions;
     std::vector<std::unique_ptr<PiecePosition>> player2_positions;
     PlayerAlgorithm *player1;
@@ -38,6 +36,7 @@ private:
     ConcreteBoard board;
     size_t player1_flags;
     size_t player2_flags;
+    std::stringstream game_over_message;
     
     void verifyJokerPositioning(int player, const PiecePosition &position) const
     {
@@ -206,10 +205,6 @@ private:
         for (auto const &point_to_piece: point_to_piece_position) {
             board.addPosition(point_to_piece.second);
         }
-        
-        std::cout << "True board is:" << std::endl;
-        board.printBoard();
-        std::cout << std::endl << std::endl << std::endl;
         
         player1->notifyOnInitialBoard(board, fights);
         player2->notifyOnInitialBoard(board, fights);
@@ -389,6 +384,26 @@ private:
         }
     }
     
+    /* This function returns the winner if there is one, and -1 if the game should continue as usual. */
+    int isGameOver()
+    {
+        if (0 == player1_flags || 0 == player2_flags) {
+            if (0 == player1_flags && 0 == player2_flags) {
+                game_over_message << "Both players lost all flags." << std::endl;
+                return 0;
+            }
+            if (0 == player1_flags) {
+                game_over_message << "Player 1 lost all flags." << std::endl;
+                return 2;
+            }
+            
+            game_over_message << "Player 2 lost all flags." << std::endl;
+            return 1;
+        }
+        
+        return -1;
+    }
+    
     /*
      * This method actually runs the players' supplied moves, one by one.
      * It returns the winner (0 in case of a tie)
@@ -397,47 +412,37 @@ private:
     {
         doInitialMoves();
         
+        int winner;
         for(size_t move_count = 0; move_count < Globals::MOVES_UNTIL_TIE; ++move_count) {
             /* Do we have a winner yet? */
-            //TODO: add appropriate messages for winning
-            if (0 == player1_flags || 0 == player2_flags) {
-                if (0 == player1_flags && 0 == player2_flags) return 0;
-                if (0 == player1_flags) return 2;
-                return 1;
+            winner = isGameOver();
+            
+            if (-1 != winner) {
+                return winner;
             }
             
             try {
                 invokeMove(player1, 1);
             } catch (const BaseError &error) {
-                //TODO: handle error
-                std::cout << "Player 1 move fail " << error.getMessage() << std::endl;
+                game_over_message << "Player 1 lost due to bad move: " << error.getMessage() << std::endl;
                 return 2;
             }
             
-            std::cout << "True board is (after player 1 move):" << std::endl;
-            board.printBoard();
-            std::cout << std::endl << std::endl << std::endl;
+            winner = isGameOver();
             
-            if (0 == player1_flags || 0 == player2_flags) {
-                //TODO: add appropriate messages for winning
-                if (0 == player1_flags && 0 == player2_flags) return 0;
-                if (0 == player1_flags) return 2;
-                return 1;
+            if (-1 != winner) {
+                return winner;
             }
             
             try {
                 invokeMove(player2, 2);
             } catch (const BaseError &error) {
-                //TODO: handle error
-                std::cout << "Player 2 move fail " << error.getMessage() << std::endl;
+                game_over_message << "Player 2 lost due to bad move: " << error.getMessage() << std::endl;
                 return 1;
             }
-            
-            std::cout << "True board is (after player 2 move):" << std::endl;
-            board.printBoard();
-            std::cout << std::endl << std::endl << std::endl;
         }
         
+        game_over_message << "Tie due to elapsed moves." << std::endl;
         /* We got to a tie. */
         return 0;
     }
@@ -446,7 +451,6 @@ public:
     void run(bool player1_file, bool player2_file)
     {
         Globals::initGlobals();
-        //TODO: Instantiate according to command line.
         AutoPlayerAlgorithm player1_auto_algorithm, player2_auto_algorithm;
         FilePlayerAlgorithm player1_file_algorithm, player2_file_algorithm;
         
@@ -470,17 +474,15 @@ public:
         try {
             verifyPlayerPosition(1, player1_positions);
         } catch (const BaseError &error) {
-            player1_loss_reason = error.getMessage();
-            std::cout << "Player 1 lost position " << player1_loss_reason << std::endl;
+            game_over_message << "Player 1 lost due to bad position: " << error.getMessage() << std::endl;
             player1_lost = true;
         }
         
         try {
             verifyPlayerPosition(2, player2_positions);
         } catch (const BaseError &error) {
-            player2_loss_reason = error.getMessage();
             player2_lost = true;
-            std::cout << "Player 2 lost position " << player2_loss_reason << std::endl;
+            game_over_message << "Player 2 lost due bad position: " << error.getMessage() << std::endl;
         }
         
         int winner;
@@ -494,6 +496,7 @@ public:
             } else {
                 winner = 1;
             }
+            game_over_message << "No board to print, problem in one of the position files." << std::endl;
             
         } else {
         
@@ -501,9 +504,12 @@ public:
             player2_flags = Globals::ALLOWED_PIECES_COUNT['F'];
             
             winner = doMoves();
+            game_over_message << "Board:" << std::endl;
+            game_over_message << board.printBoard();
         }
         
-        std::cout << "Winner is " << winner << std::endl;
+        game_over_message << "Winner is " << winner << std::endl;
+        std::cout << game_over_message.str();
     }
 };
 
